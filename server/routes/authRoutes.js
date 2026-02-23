@@ -1,10 +1,13 @@
 const express = require("express");
 const router = express.Router();
 
-const { login } = require("../controllers/authController");
+const { login, register } = require("../controllers/authController");
 const { protect } = require("../middleware/authMiddleware");
 const upload = require("../middleware/uploadMiddleware");
 const User = require("../models/User");
+
+// REGISTER
+router.post("/register", register);
 
 // LOGIN
 router.post("/login", login);
@@ -21,10 +24,7 @@ router.post(
       }
 
       const user = await User.findById(req.user._id);
-
-      // ✅ SAVE ONLY filename
       user.resume = req.file.filename;
-
       await user.save();
 
       res.json({ message: "Resume uploaded successfully" });
