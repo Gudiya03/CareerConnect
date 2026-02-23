@@ -13,7 +13,9 @@ exports.register = async (req, res) => {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    const hashed = await bcrypt.hash(password, 10);
+    // const hashed = await bcrypt.hash(password, 10);
+    const salt = await bcrypt.genSalt(10);
+const hashed = await bcrypt.hash(password, salt);
 
     const user = await User.create({
       name,
@@ -79,7 +81,8 @@ exports.uploadResume = async (req, res) => {
     const user = await User.findById(req.user._id);
 
     // 🔥 IMPORTANT FIX
-    user.resume = `/uploads/${req.file.filename}`;
+    
+    user.resume = `${process.env.BASE_URL}/uploads/${req.file.filename}`;
 
     await user.save();
 
