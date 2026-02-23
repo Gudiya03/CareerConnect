@@ -1,7 +1,7 @@
 import axios from "axios";
 
 export const API = axios.create({
-  baseURL: "http://localhost:5000/api",
+  baseURL: "https://careerconnect-backend-tchr.onrender.com",
 });
 
 API.interceptors.request.use((req) => {
