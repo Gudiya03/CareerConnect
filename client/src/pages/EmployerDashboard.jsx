@@ -12,6 +12,8 @@ const EmployerDashboard = () => {
     const company = prompt("Company:");
     const description = prompt("Description:");
 
+    if (!title || !company) return;
+
     await API.post("/jobs", { title, company, description });
     fetchJobs();
   };
@@ -24,9 +26,13 @@ const EmployerDashboard = () => {
 
   // VIEW APPLICANTS
   const viewApplicants = async (jobId) => {
-    const res = await API.get(`/applications/job/${jobId}`);
-    setApplicants(res.data);
-    setSelectedJob(jobId);
+    try {
+      const res = await API.get(`/applications/job/${jobId}`);
+      setApplicants(res.data);
+      setSelectedJob(jobId);
+    } catch (err) {
+      console.log(err);
+    }
   };
 
   // UPDATE STATUS
@@ -40,78 +46,87 @@ const EmployerDashboard = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-10">
-      <h1 className="text-3xl font-bold mb-6 text-indigo-400">
+    <div className="w-full min-h-screen bg-[#020617] text-white pt-24 px-10">
+
+      <h1 className="text-4xl font-bold mb-6 text-indigo-400">
         Employer Dashboard
       </h1>
 
       {/* POST JOB */}
       <button
         onClick={postJob}
-        className="bg-indigo-600 px-4 py-2 rounded mb-6"
+        className="bg-indigo-600 px-5 py-2 rounded mb-10 hover:bg-indigo-700"
       >
         Post Job
       </button>
 
       {/* JOB LIST */}
-      {jobs.map((job) => (
-        <div key={job._id} className="bg-gray-800 p-5 mb-4 rounded">
-          <h2 className="text-xl">{job.title}</h2>
-          <p className="text-indigo-400">{job.company}</p>
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {jobs.map((job) => (
+          <div key={job._id} className="bg-gray-900 p-6 rounded-lg">
+            <h2 className="text-xl font-semibold">{job.title}</h2>
+            <p className="text-indigo-400">{job.company}</p>
 
-          <button
-            onClick={() => viewApplicants(job._id)}
-            className="mt-3 bg-green-600 px-3 py-1 rounded"
-          >
-            View Applicants
-          </button>
-        </div>
-      ))}
+            <button
+              onClick={() => viewApplicants(job._id)}
+              className="mt-4 bg-green-600 px-4 py-2 rounded hover:bg-green-700"
+            >
+              View Applicants
+            </button>
+          </div>
+        ))}
+      </div>
 
       {/* APPLICANTS SECTION */}
       {selectedJob && (
-        <div className="mt-10">
-          <h2 className="text-2xl mb-4">Applicants</h2>
+        <div className="mt-16">
+          <h2 className="text-3xl mb-6">Applicants</h2>
 
-          {applicants.map((a) => (
-            <div
-              key={a._id}
-              className="bg-gray-800 p-4 mb-3 rounded flex justify-between items-center"
-            >
-              <div>
-                <p className="font-semibold">{a.applicant.email}</p>
-                <p>Status: {a.status}</p>
+          {applicants.length === 0 && (
+            <p className="text-gray-400">No applicants yet</p>
+          )}
 
-                {/* 🔥 RESUME BUTTON */}
-                {a.applicant?.resume && (
-                  <a
-                    href={`http://localhost:5000/uploads/${a.applicant.resume}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-indigo-400 underline"
+          <div className="space-y-4">
+            {applicants.map((a) => (
+              <div
+                key={a._id}
+                className="bg-gray-900 p-5 rounded flex justify-between items-center"
+              >
+                <div>
+                  {/* 🔥 FIXED FIELD NAME */}
+                  <p className="font-semibold">{a.applicant?.email}</p>
+                  <p>Status: {a.status}</p>
+
+                  {a.applicant?.resume && (
+                    <a
+                      href={`http://localhost:5000/uploads/${a.applicant.resume}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-indigo-400 underline"
+                    >
+                      View Resume
+                    </a>
+                  )}
+                </div>
+
+                <div className="space-x-2">
+                  <button
+                    onClick={() => updateStatus(a._id, "accepted")}
+                    className="bg-green-600 px-3 py-1 rounded"
                   >
-                    View Resume
-                  </a>
-                )}
-              </div>
+                    Accept
+                  </button>
 
-              <div className="space-x-2">
-                <button
-                  onClick={() => updateStatus(a._id, "accepted")}
-                  className="bg-green-600 px-3 py-1 rounded"
-                >
-                  Accept
-                </button>
-
-                <button
-                  onClick={() => updateStatus(a._id, "rejected")}
-                  className="bg-red-600 px-3 py-1 rounded"
-                >
-                  Reject
-                </button>
+                  <button
+                    onClick={() => updateStatus(a._id, "rejected")}
+                    className="bg-red-600 px-3 py-1 rounded"
+                  >
+                    Reject
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
     </div>

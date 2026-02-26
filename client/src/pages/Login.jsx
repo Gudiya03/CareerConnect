@@ -26,39 +26,56 @@ const Login = () => {
   };
 
   return (
-    <div className="flex justify-center items-center h-screen bg-gray-100">
-      <div className="bg-white p-8 rounded shadow w-96">
-        <h2 className="text-2xl font-bold mb-6 text-center">Login</h2>
+    <div className="h-screen w-screen flex overflow-hidden">
 
-        <input
-          className="w-full p-3 mb-4 rounded bg-gray-800 text-white"
-          placeholder="Email"
-          onChange={(e)=>setEmail(e.target.value)}
-        />
+      {/* LEFT SIDE */}
+      <div className="w-full md:w-1/2 flex items-center justify-center bg-white px-6">
 
-        <input
-          className="w-full p-3 mb-4 rounded bg-gray-800 text-white"
-          placeholder="Password"
-          type="password"
-          onChange={(e)=>setPassword(e.target.value)}
-        />
+        <div className="w-full max-w-md">
+          <h2 className="text-3xl font-bold mb-6 text-center">Login</h2>
 
-        <button
-          onClick={submit}
-          className="w-full bg-indigo-600 text-white py-2 rounded"
-        >
-          Login
-        </button>
+          <input
+            className="w-full p-3 mb-4 rounded-lg bg-gray-800 text-white"
+            placeholder="Email"
+            onChange={(e)=>setEmail(e.target.value)}
+          />
 
-        {/* 🔥 REGISTER LINK ADDED */}
-        <p className="text-center mt-4 text-sm">
-          Don't have an account?{" "}
-          <Link to="/register" className="text-indigo-600 font-semibold">
-            Register
-          </Link>
-        </p>
+          <input
+            className="w-full p-3 mb-4 rounded-lg bg-gray-800 text-white"
+            placeholder="Password"
+            type="password"
+            onChange={(e)=>setPassword(e.target.value)}
+          />
+
+          <button
+            onClick={submit}
+            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-lg"
+          >
+            Login
+          </button>
+
+          <p className="text-center mt-4">
+            Don't have an account?{" "}
+            <Link to="/register" className="text-indigo-600 font-semibold">
+              Register
+            </Link>
+          </p>
+        </div>
 
       </div>
+
+      {/* RIGHT SIDE FULL SCREEN */}
+      <div className="hidden md:flex flex-1 items-center justify-center bg-gradient-to-br from-indigo-700 to-purple-700 text-white">
+
+        <div className="text-center px-10">
+          <h1 className="text-5xl font-bold mb-4">Career Connect</h1>
+          <p className="text-lg opacity-90">
+            Find your dream job and connect with top companies.
+          </p>
+        </div>
+
+      </div>
+
     </div>
   );
 };
