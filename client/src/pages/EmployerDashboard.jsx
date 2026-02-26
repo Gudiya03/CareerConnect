@@ -8,6 +8,18 @@ const EmployerDashboard = () => {
 
   const applicantsRef = useRef(null);
 
+  // POST JOB
+  const postJob = async () => {
+    const title = prompt("Job title:");
+    const company = prompt("Company:");
+    const description = prompt("Description:");
+
+    if (!title || !company) return;
+
+    await API.post("/jobs", { title, company, description });
+    fetchJobs();
+  };
+
   // FETCH JOBS
   const fetchJobs = async () => {
     const res = await API.get("/jobs");
@@ -25,7 +37,18 @@ const EmployerDashboard = () => {
     }
   };
 
-  // 🔥 SCROLL AFTER RENDER (important)
+  // UPDATE STATUS
+  const updateStatus = async (appId, status) => {
+    await API.put(`/applications/${appId}`, { status });
+    viewApplicants(selectedJob);
+  };
+
+  // Fetch jobs once
+  useEffect(() => {
+    fetchJobs();
+  }, []);
+
+  // 🔥 AUTO SCROLL AFTER RENDER
   useEffect(() => {
     if (selectedJob && applicantsRef.current) {
       applicantsRef.current.scrollIntoView({
@@ -35,15 +58,20 @@ const EmployerDashboard = () => {
     }
   }, [selectedJob]);
 
-  useEffect(() => {
-    fetchJobs();
-  }, []);
-
   return (
     <div className="w-full min-h-screen bg-[#020617] text-white pt-24 px-10">
+
       <h1 className="text-4xl font-bold mb-6 text-indigo-400">
         Employer Dashboard
       </h1>
+
+      {/* POST JOB */}
+      <button
+        onClick={postJob}
+        className="bg-indigo-600 px-5 py-2 rounded mb-10 hover:bg-indigo-700"
+      >
+        Post Job
+      </button>
 
       {/* JOB LIST */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -64,7 +92,7 @@ const EmployerDashboard = () => {
 
       {/* APPLICANTS SECTION */}
       {selectedJob && (
-        <div ref={applicantsRef} className="mt-20">
+        <div ref={applicantsRef} className="mt-20 pt-10">
           <h2 className="text-3xl mb-6">Applicants</h2>
 
           {applicants.length === 0 && (
@@ -80,6 +108,33 @@ const EmployerDashboard = () => {
                 <div>
                   <p className="font-semibold">{a.applicant?.email}</p>
                   <p>Status: {a.status}</p>
+
+                  {a.applicant?.resume && (
+                    <a
+                      href={`http://localhost:5000/uploads/${a.applicant.resume}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-indigo-400 underline"
+                    >
+                      View Resume
+                    </a>
+                  )}
+                </div>
+
+                <div className="space-x-2">
+                  <button
+                    onClick={() => updateStatus(a._id, "accepted")}
+                    className="bg-green-600 px-3 py-1 rounded"
+                  >
+                    Accept
+                  </button>
+
+                  <button
+                    onClick={() => updateStatus(a._id, "rejected")}
+                    className="bg-red-600 px-3 py-1 rounded"
+                  >
+                    Reject
+                  </button>
                 </div>
               </div>
             ))}
