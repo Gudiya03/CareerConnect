@@ -1,10 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { API } from "../api/api";
 
 const EmployerDashboard = () => {
   const [jobs, setJobs] = useState([]);
   const [applicants, setApplicants] = useState([]);
   const [selectedJob, setSelectedJob] = useState(null);
+
+  // 👇 scroll ref
+  const applicantsRef = useRef(null);
 
   // POST JOB
   const postJob = async () => {
@@ -30,6 +33,14 @@ const EmployerDashboard = () => {
       const res = await API.get(`/applications/job/${jobId}`);
       setApplicants(res.data);
       setSelectedJob(jobId);
+
+      // 🔥 AUTO SCROLL
+      setTimeout(() => {
+        applicantsRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }, 200);
     } catch (err) {
       console.log(err);
     }
@@ -79,7 +90,7 @@ const EmployerDashboard = () => {
 
       {/* APPLICANTS SECTION */}
       {selectedJob && (
-        <div className="mt-16">
+        <div ref={applicantsRef} className="mt-16">
           <h2 className="text-3xl mb-6">Applicants</h2>
 
           {applicants.length === 0 && (
@@ -93,7 +104,6 @@ const EmployerDashboard = () => {
                 className="bg-gray-900 p-5 rounded flex justify-between items-center"
               >
                 <div>
-                  {/* 🔥 FIXED FIELD NAME */}
                   <p className="font-semibold">{a.applicant?.email}</p>
                   <p>Status: {a.status}</p>
 
