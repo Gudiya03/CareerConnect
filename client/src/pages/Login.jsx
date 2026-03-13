@@ -3,24 +3,32 @@ import { API } from "../api/api";
 import { useNavigate, Link } from "react-router-dom";
 
 const Login = () => {
-  const [email,setEmail]=useState("");
-  const [password,setPassword]=useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
   const submit = async () => {
     try {
-      const res = await API.post("/auth/login",{email,password});
+      const res = await API.post("/auth/login", {
+        email,
+        password,
+      });
 
-      localStorage.setItem("token", res.data.token);
-      localStorage.setItem("role", res.data.user.role);
+      // ✅ NEW TOKEN STORAGE
+      localStorage.setItem("accessToken", res.data.accessToken);
+      localStorage.setItem("refreshToken", res.data.refreshToken);
+      localStorage.setItem("role", res.data.role);
 
-      if(res.data.user.role === "employer"){
+      // 🔥 Redirect based on role
+      if (res.data.role === "employer") {
         navigate("/employer");
+      } else if (res.data.role === "admin") {
+        navigate("/admin");
       } else {
         navigate("/jobs");
       }
 
-    } catch(err){
+    } catch (err) {
       alert(err.response?.data?.message || "Login failed");
     }
   };
@@ -37,14 +45,14 @@ const Login = () => {
           <input
             className="w-full p-3 mb-4 rounded-lg bg-gray-800 text-white"
             placeholder="Email"
-            onChange={(e)=>setEmail(e.target.value)}
+            onChange={(e) => setEmail(e.target.value)}
           />
 
           <input
             className="w-full p-3 mb-4 rounded-lg bg-gray-800 text-white"
             placeholder="Password"
             type="password"
-            onChange={(e)=>setPassword(e.target.value)}
+            onChange={(e) => setPassword(e.target.value)}
           />
 
           <button
@@ -64,16 +72,14 @@ const Login = () => {
 
       </div>
 
-      {/* RIGHT SIDE FULL SCREEN */}
+      {/* RIGHT SIDE */}
       <div className="hidden md:flex flex-1 items-center justify-center bg-gradient-to-br from-indigo-700 to-purple-700 text-white">
-
         <div className="text-center px-10">
           <h1 className="text-5xl font-bold mb-4">Career Connect</h1>
           <p className="text-lg opacity-90">
             Find your dream job and connect with top companies.
           </p>
         </div>
-
       </div>
 
     </div>

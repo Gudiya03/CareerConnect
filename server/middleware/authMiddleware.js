@@ -1,10 +1,13 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 
+
+// ================= PROTECT ROUTES =================
 exports.protect = async (req, res, next) => {
   try {
     let token;
 
+    // Get token from header
     if (
       req.headers.authorization &&
       req.headers.authorization.startsWith("Bearer")
@@ -13,17 +16,47 @@ exports.protect = async (req, res, next) => {
     }
 
     if (!token) {
-      return res.status(401).json({ message: "No token" });
+      return res.status(401).json({ message: "Access denied. No token." });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || "secret");
+    // Verify access token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    req.user = await User.findById(decoded.id).select("-password");
+    const user = await User.findById(decoded.id).select("-password");
+
+    if (!user) {
+      return res.status(401).json({ message: "User not found" });
+    }
+
+    if (!user.isVerified) {
+      return res.status(403).json({ message: "Email not verified" });
+    }
+
+    req.user = user;
 
     next();
 
   } catch (err) {
-    console.log("TOKEN ERROR:", err.message);
-    res.status(401).json({ message: "Token failed" });
+
+    if (err.name === "TokenExpiredError") {
+      return res.status(401).json({ message: "Access token expired" });
+    }
+
+    return res.status(401).json({ message: "Invalid token" });
   }
+};
+
+
+// ================= ROLE AUTHORIZATION =================
+exports.authorizeRoles = (...roles) => {
+  return (req, res, next) => {
+
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({
+        message: `Access denied for role: ${req.user.role}`,
+      });
+    }
+
+    next();
+  };
 };

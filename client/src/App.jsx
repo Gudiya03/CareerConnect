@@ -7,6 +7,8 @@ import EmployerDashboard from "./pages/EmployerDashboard";
 import MyApplications from "./pages/MyApplications";
 import Navbar from "./components/Navbar";
 import JobApplicants from "./pages/JobApplicants";
+import Profile from "./pages/Profile";
+import VerifyEmail from "./pages/VerifyEmail";
 
 function Layout() {
   const location = useLocation();
@@ -30,6 +32,10 @@ function Layout() {
           <Route path="/employer" element={<EmployerDashboard />} />
           <Route path="/my-applications" element={<MyApplications />} />
           <Route path="/job-applicants/:id" element={<JobApplicants />} />
+
+          {/* ✅ NEW PROFILE ROUTE */}
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/verify/:token" element={<VerifyEmail />} />
         </Routes>
       </div>
     </div>

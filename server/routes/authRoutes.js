@@ -1,18 +1,49 @@
 const express = require("express");
 const router = express.Router();
 
-const { register, login } = require("../controllers/authController");
+const {
+  register,
+  login,
+  verifyEmail,
+  refreshToken,
+  forgotPassword,
+  resetPassword,
+  uploadResume,
+  getProfile,          // ✅ added
+  updateProfile        // ✅ added
+} = require("../controllers/authController");
+
 const { protect } = require("../middleware/authMiddleware");
 const upload = require("../middleware/uploadMiddleware");
-const User = require("../models/User");
 
 
 // ================= REGISTER =================
 router.post("/register", register);
 
 
+// ================= VERIFY EMAIL =================
+router.get("/verify-email/:token", verifyEmail);
+
+
 // ================= LOGIN =================
 router.post("/login", login);
+
+
+// ================= REFRESH TOKEN =================
+router.post("/refresh-token", refreshToken);
+
+
+// ================= FORGOT PASSWORD =================
+router.post("/forgot-password", forgotPassword);
+
+
+// ================= RESET PASSWORD =================
+router.post("/reset-password/:token", resetPassword);
+
+
+// ================= PROFILE =================
+router.get("/profile", protect, getProfile);      // ✅ GET PROFILE
+router.put("/profile", protect, updateProfile);  // ✅ UPDATE PROFILE
 
 
 // ================= UPLOAD RESUME =================
@@ -20,24 +51,7 @@ router.post(
   "/upload-resume",
   protect,
   upload.single("resume"),
-  async (req, res) => {
-    try {
-      if (!req.file) {
-        return res.status(400).json({ message: "No file uploaded" });
-      }
-
-      const user = await User.findById(req.user._id);
-
-      user.resume = req.file.filename;
-
-      await user.save();
-
-      res.json({ message: "Resume uploaded successfully" });
-    } catch (err) {
-      console.log(err);
-      res.status(500).json({ message: "Upload failed" });
-    }
-  }
+  uploadResume
 );
 
 module.exports = router;
