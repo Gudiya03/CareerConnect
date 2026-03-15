@@ -9,6 +9,11 @@ import Navbar from "./components/Navbar";
 import JobApplicants from "./pages/JobApplicants";
 import Profile from "./pages/Profile";
 import VerifyEmail from "./pages/VerifyEmail";
+import EmployerLayout from "./components/EmployerLayout";
+import EmployerJobs from "./pages/EmployerJobs";
+import EmployerApplicants from "./pages/EmployerApplicants";
+import EmployerAnalytics from "./pages/EmployerAnalytics";
+import EmployerProfile from "./pages/EmployerProfile";
 
 function Layout() {
   const location = useLocation();
@@ -19,24 +24,38 @@ function Layout() {
     location.pathname !== "/register";
 
   return (
-    <div className="w-full min-h-screen overflow-x-hidden">
+    <div className="w-full min-h-screen overflow-x-hidden bg-white dark:bg-[#020617]">
+
       {showNavbar && <Navbar />}
 
-      {/* Add space if navbar is fixed */}
       <div className={showNavbar ? "pt-16 w-full" : "w-full"}>
+
         <Routes>
+
           <Route path="/" element={<Login />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+
           <Route path="/jobs" element={<Jobs />} />
-          <Route path="/employer" element={<EmployerDashboard />} />
           <Route path="/my-applications" element={<MyApplications />} />
           <Route path="/job-applicants/:id" element={<JobApplicants />} />
-
-          {/* ✅ NEW PROFILE ROUTE */}
           <Route path="/profile" element={<Profile />} />
           <Route path="/verify/:token" element={<VerifyEmail />} />
+
+          {/* EMPLOYER ROUTES */}
+
+          <Route path="/employer" element={<EmployerLayout />}>
+
+            <Route index element={<EmployerDashboard />} />
+  <Route path="jobs" element={<EmployerJobs />} />
+  <Route path="applicants" element={<EmployerApplicants />} />
+  <Route path="analytics" element={<EmployerAnalytics />} />
+  <Route path="profile" element={<EmployerProfile />} />
+
+          </Route>
+
         </Routes>
+
       </div>
     </div>
   );

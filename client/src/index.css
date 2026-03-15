@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Enable dark mode */
+@variant dark (&:where(.dark, .dark *));
+
 /* FULL SCREEN FIX */
 html, body, #root {
   width: 100%;

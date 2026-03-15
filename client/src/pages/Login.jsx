@@ -8,30 +8,34 @@ const Login = () => {
   const navigate = useNavigate();
 
   const submit = async () => {
-    try {
-      const res = await API.post("/auth/login", {
-        email,
-        password,
-      });
+  try {
+    const res = await API.post("/auth/login", {
+      email,
+      password,
+    });
 
-      // ✅ NEW TOKEN STORAGE
-      localStorage.setItem("accessToken", res.data.accessToken);
-      localStorage.setItem("refreshToken", res.data.refreshToken);
-      localStorage.setItem("role", res.data.role);
+    // TOKEN STORAGE
+    localStorage.setItem("accessToken", res.data.accessToken);
+    localStorage.setItem("refreshToken", res.data.refreshToken);
+    localStorage.setItem("role", res.data.role);
 
-      // 🔥 Redirect based on role
-      if (res.data.role === "employer") {
-        navigate("/employer");
-      } else if (res.data.role === "admin") {
-        navigate("/admin");
-      } else {
-        navigate("/jobs");
-      }
+    // SAVE USER INFO
+    localStorage.setItem("userEmail", res.data.user.email);
+    localStorage.setItem("userName", res.data.user.name);
 
-    } catch (err) {
-      alert(err.response?.data?.message || "Login failed");
+    // REDIRECT BASED ON ROLE
+    if (res.data.role === "employer") {
+      navigate("/employer");
+    } else if (res.data.role === "admin") {
+      navigate("/admin");
+    } else {
+      navigate("/jobs");
     }
-  };
+
+  } catch (err) {
+    alert(err.response?.data?.message || "Login failed");
+  }
+};
 
   return (
     <div className="h-screen w-screen flex overflow-hidden">
