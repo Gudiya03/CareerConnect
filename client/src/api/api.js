@@ -1,8 +1,10 @@
 import axios from "axios";
 
+// Create axios instance
 export const API = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
 });
+
 
 // ================= REQUEST INTERCEPTOR =================
 API.interceptors.request.use((req) => {
@@ -23,17 +25,28 @@ API.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // If access token expired
+    // Handle token expiration
     if (
       error.response &&
       error.response.status === 401 &&
-      !originalRequest._retry
+      !originalRequest._retry &&
+      !originalRequest.url.includes("/auth/refresh-token")
     ) {
+
       originalRequest._retry = true;
 
       try {
+
         const refreshToken = localStorage.getItem("refreshToken");
 
+        // If refresh token missing → logout
+        if (!refreshToken) {
+          localStorage.clear();
+          window.location.href = "/login";
+          return Promise.reject(error);
+        }
+
+        // Request new access token
         const res = await axios.post(
           `${import.meta.env.VITE_API_URL}/auth/refresh-token`,
           { refreshToken }
@@ -41,17 +54,22 @@ API.interceptors.response.use(
 
         const newAccessToken = res.data.accessToken;
 
+        // Save new access token
         localStorage.setItem("accessToken", newAccessToken);
 
-        originalRequest.headers.Authorization =
-          `Bearer ${newAccessToken}`;
+        // Update header
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
 
+        // Retry original request
         return API(originalRequest);
 
-      } catch (err) {
-        // Refresh token expired → logout
+      } catch (refreshError) {
+
+        // Refresh token expired → logout user
         localStorage.clear();
         window.location.href = "/login";
+
+        return Promise.reject(refreshError);
       }
     }
 
