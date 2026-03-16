@@ -8,6 +8,7 @@ export const API = axios.create({
 
 // ================= REQUEST INTERCEPTOR =================
 API.interceptors.request.use((req) => {
+
   const accessToken = localStorage.getItem("accessToken");
 
   if (accessToken) {
@@ -15,17 +16,20 @@ API.interceptors.request.use((req) => {
   }
 
   return req;
+
 });
 
 
 // ================= RESPONSE INTERCEPTOR =================
 API.interceptors.response.use(
+
   (response) => response,
 
   async (error) => {
+
     const originalRequest = error.config;
 
-    // Handle token expiration
+    // If request fails with 401
     if (
       error.response &&
       error.response.status === 401 &&
@@ -39,10 +43,8 @@ API.interceptors.response.use(
 
         const refreshToken = localStorage.getItem("refreshToken");
 
-        // If refresh token missing → logout
+        // If no refresh token → do not logout automatically
         if (!refreshToken) {
-          localStorage.clear();
-          window.location.href = "/login";
           return Promise.reject(error);
         }
 
@@ -54,7 +56,7 @@ API.interceptors.response.use(
 
         const newAccessToken = res.data.accessToken;
 
-        // Save new access token
+        // Save new token
         localStorage.setItem("accessToken", newAccessToken);
 
         // Update header
@@ -65,14 +67,17 @@ API.interceptors.response.use(
 
       } catch (refreshError) {
 
-        // Refresh token expired → logout user
-        localStorage.clear();
-        window.location.href = "/login";
+        console.log("Refresh token failed");
 
+        // Do NOT clear localStorage here
         return Promise.reject(refreshError);
+
       }
+
     }
 
     return Promise.reject(error);
+
   }
+
 );
