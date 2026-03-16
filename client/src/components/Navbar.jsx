@@ -17,8 +17,13 @@ const Navbar = () => {
   const token = localStorage.getItem("accessToken");
   const role = localStorage.getItem("role");
 
-  const userEmail = localStorage.getItem("userEmail");
-  const avatarLetter = userEmail ? userEmail.charAt(0).toUpperCase() : "U";
+  // ⭐ GET USER NAME
+  const userName = localStorage.getItem("userName");
+
+  // ⭐ AVATAR LETTER FROM NAME
+  const avatarLetter = userName
+    ? userName.charAt(0).toUpperCase()
+    : "U";
 
   /* DARK MODE */
 
@@ -53,6 +58,8 @@ const Navbar = () => {
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
     localStorage.removeItem("role");
+    localStorage.removeItem("userName");
+    localStorage.removeItem("userEmail");
 
     navigate("/login");
   };
