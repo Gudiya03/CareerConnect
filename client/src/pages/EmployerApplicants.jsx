@@ -1,5 +1,4 @@
 
-
 import { useEffect, useState } from "react";
 import { API } from "../api/api";
 import toast from "react-hot-toast";
@@ -38,6 +37,7 @@ const EmployerApplicants = () => {
   // update status
   const updateStatus = async (id, status) => {
     try {
+
       await API.put(`/applications/${id}`, { status });
 
       toast.success("Status updated");
@@ -94,6 +94,7 @@ const EmployerApplicants = () => {
 
             <tr>
               <th className="p-4 text-left">Candidate</th>
+              <th className="p-4 text-left">Resume</th>
               <th className="p-4 text-left">Status</th>
               <th className="p-4 text-left">Actions</th>
             </tr>
@@ -107,7 +108,7 @@ const EmployerApplicants = () => {
             {applicants.length === 0 ? (
 
               <tr>
-                <td className="p-6 text-gray-500 dark:text-gray-400" colSpan="3">
+                <td className="p-6 text-gray-500 dark:text-gray-400" colSpan="4">
                   No applicants yet
                 </td>
               </tr>
@@ -125,6 +126,31 @@ const EmployerApplicants = () => {
 
                   <td className="p-4 text-gray-800 dark:text-gray-200">
                     {app.applicant?.email}
+                  </td>
+
+                  {/* RESUME */}
+
+                  <td className="p-4">
+
+                    {app.resume ? (
+
+                      <a
+                        href={`${import.meta.env.VITE_API_URL.replace("/api","")}/${app.resume}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-indigo-600 hover:underline"
+                      >
+                        Download Resume
+                      </a>
+
+                    ) : (
+
+                      <span className="text-gray-400">
+                        No Resume
+                      </span>
+
+                    )}
+
                   </td>
 
                   {/* STATUS */}
@@ -183,3 +209,4 @@ const EmployerApplicants = () => {
 };
 
 export default EmployerApplicants;
+

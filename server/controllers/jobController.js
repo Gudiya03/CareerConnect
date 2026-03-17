@@ -1,3 +1,4 @@
+
 const Job = require("../models/Job");
 const Application = require("../models/Application");
 
@@ -37,7 +38,8 @@ exports.createJob = async (req, res) => {
   }
 };
 
-// GET JOBS
+
+// GET ALL JOBS
 exports.getJobs = async (req, res) => {
   try {
 
@@ -78,10 +80,94 @@ exports.getJobs = async (req, res) => {
 };
 
 
+// GET SINGLE JOB
+exports.getJobById = async (req, res) => {
+  try {
+
+    const job = await Job.findById(req.params.id);
+
+    if (!job) {
+      return res.status(404).json({ message: "Job not found" });
+    }
+
+    const applicantsCount = await Application.countDocuments({
+      job: job._id
+    });
+
+    const acceptedCount = await Application.countDocuments({
+      job: job._id,
+      status: "accepted"
+    });
+
+    const pendingCount = await Application.countDocuments({
+      job: job._id,
+      status: "pending"
+    });
+
+    res.json({
+      ...job._doc,
+      applicantsCount,
+      acceptedCount,
+      pendingCount
+    });
+
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching job" });
+  }
+};
+
+
+// SAVE / UNSAVE JOB
+exports.saveJob = async (req, res) => {
+  try {
+
+    const job = await Job.findById(req.params.id);
+
+    if (!job) {
+      return res.status(404).json({ message: "Job not found" });
+    }
+
+    const userId = req.user.id.toString();
+
+    if (!job.savedBy) {
+      job.savedBy = [];
+    }
+
+    const alreadySaved = job.savedBy.some(
+      (id) => id.toString() === userId
+    );
+
+    if (alreadySaved) {
+
+      job.savedBy = job.savedBy.filter(
+        (id) => id.toString() !== userId
+      );
+
+      await job.save();
+
+      return res.json({ saved: false });
+
+    } else {
+
+      job.savedBy.push(userId);
+
+      await job.save();
+
+      return res.json({ saved: true });
+
+    }
+
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Save job error" });
+  }
+};
+
 
 // DELETE JOB
 exports.deleteJob = async (req, res) => {
   try {
+
     const job = await Job.findById(req.params.id);
 
     if (!job) {
@@ -97,6 +183,8 @@ exports.deleteJob = async (req, res) => {
     res.status(500).json({ message: "Error deleting job" });
   }
 };
+
+
 // UPDATE JOB
 exports.updateJob = async (req, res) => {
   try {
@@ -111,6 +199,7 @@ exports.updateJob = async (req, res) => {
     job.company = req.body.company || job.company;
     job.location = req.body.location || job.location;
     job.salary = req.body.salary || job.salary;
+    job.jobType = req.body.jobType || job.jobType;
     job.experience = req.body.experience || job.experience;
     job.description = req.body.description || job.description;
     job.skills = req.body.skills || job.skills;

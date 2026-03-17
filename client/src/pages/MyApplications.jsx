@@ -44,74 +44,92 @@ const MyApplications = () => {
   };
 
   return (
-    <div className="w-full min-h-screen bg-white dark:bg-[#020617] text-gray-900 dark:text-white p-10">
+    <div className="w-full min-h-screen bg-white dark:bg-[#020617] text-gray-900 dark:text-white p-6 md:p-10 transition-colors duration-300">
 
-      {/* UPLOAD SECTION */}
-      <div className="mb-10 bg-white dark:bg-slate-900 p-6 rounded-xl border border-gray-200 dark:border-slate-700 max-w-xl">
+      {/* ===== UPLOAD SECTION ===== */}
+      <div className="mb-12 max-w-2xl mx-auto">
+        <div className="bg-gray-100 dark:bg-slate-900 p-6 rounded-2xl border border-black dark:border-white shadow-sm hover:shadow-xl transition duration-300">
 
-  <h2 className="text-lg font-semibold mb-2">
-    Resume
-  </h2>
+          <h2 className="text-xl font-semibold mb-2 tracking-wide">
+            📄 Resume
+          </h2>
 
-  <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-    Upload your latest resume so employers can view it.
-  </p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
+            Upload your latest resume so employers can view it.
+          </p>
 
-  <div className="flex flex-col md:flex-row gap-3 md:items-center">
+          <div className="flex flex-col md:flex-row gap-4 md:items-center">
 
-    <input
-      type="file"
-      onChange={(e) => setFile(e.target.files[0])}
-      className="text-sm"
-    />
+            <input
+              type="file"
+              onChange={(e) => setFile(e.target.files[0])}
+              className="text-sm w-full border border-black dark:border-white rounded-lg px-3 py-2 bg-gray-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+            />
 
-    <button
-      onClick={uploadResume}
-      className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg"
-    >
-      Upload Resume
-    </button>
+            <button
+              onClick={uploadResume}
+              className="px-5 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium hover:scale-105 hover:shadow-lg transition-all duration-200"
+            >
+              Upload Resume
+            </button>
 
-  </div>
+          </div>
+        </div>
+      </div>
 
-</div>
-
-      <h1 className="text-3xl font-bold mb-8 text-indigo-600 dark:text-indigo-400">
+      {/* ===== TITLE ===== */}
+      <h1 className="text-3xl md:text-4xl font-bold mb-10 text-center bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-500 text-transparent bg-clip-text">
         My Applications
       </h1>
 
+      {/* ===== EMPTY STATE ===== */}
       {applications.length === 0 && (
-        <p className="text-gray-500 dark:text-gray-400">
+        <p className="text-gray-500 dark:text-gray-400 text-center text-lg">
           You have not applied to any jobs yet.
         </p>
       )}
 
-      {applications.map((app) => (
-        <div
-          key={app._id}
-          className="bg-white dark:bg-slate-900 p-6 rounded-xl mb-6 border border-gray-200 dark:border-slate-700"
-        >
-          <h2 className="text-xl font-semibold">{app.job?.title}</h2>
+      {/* ===== APPLICATION LIST ===== */}
+      <div className="max-w-4xl mx-auto space-y-6">
 
-          <p className="text-indigo-500 mb-2">{app.job?.company}</p>
-
-          <p className="text-gray-600 dark:text-gray-400 mb-4">
-            {app.job?.description}
-          </p>
-
-          <span
-            className={`px-3 py-1 rounded text-sm font-medium ${
-              app.status === "accepted"
-                ? "bg-green-600 text-white"
-                : app.status === "rejected"
-                ? "bg-red-600 text-white"
-                : "bg-yellow-500 text-black"
-            }`}
+        {applications.map((app) => (
+          <div
+            key={app._id}
+            className="bg-gray-100 dark:bg-slate-900 p-6 rounded-2xl border border-black dark:border-white shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
           >
-            {app.status?.toUpperCase()}
-          </span>
-        </div>
-      ))}
+
+            <div className="flex justify-between items-start mb-3">
+
+              <h2 className="text-xl font-semibold hover:text-indigo-600 dark:hover:text-indigo-400 transition">
+                {app.job?.title}
+              </h2>
+
+              <span
+                className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                  app.status === "accepted"
+                    ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
+                    : app.status === "rejected"
+                    ? "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300"
+                    : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300"
+                }`}
+              >
+                {app.status?.toUpperCase()}
+              </span>
+
+            </div>
+
+            <p className="text-indigo-600 dark:text-indigo-400 mb-2 text-sm font-medium">
+              {app.job?.company}
+            </p>
+
+            <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
+              {app.job?.description}
+            </p>
+
+          </div>
+        ))}
+
+      </div>
     </div>
   );
 };

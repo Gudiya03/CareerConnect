@@ -72,6 +72,19 @@ const userSchema = mongoose.Schema(
     github: String,
     portfolio: String,
   },
+  // ================= EMPLOYER PROFILE =================
+companyName: {
+type: String,
+},
+
+companyWebsite: {
+type: String,
+},
+
+industry: {
+type: String,
+},
+
 
   // ================= AUTH =================
   isVerified: {

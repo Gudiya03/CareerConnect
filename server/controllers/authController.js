@@ -1,7 +1,7 @@
 const User = require("../models/User");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
-
+const nodemailer = require("nodemailer");
 
 // ================= TOKEN GENERATORS =================
 const generateAccessToken = (id) => {
@@ -16,15 +16,10 @@ const generateRefreshToken = (id) => {
   });
 };
 
-
-// ================= REGISTER =================
-const nodemailer = require("nodemailer");
-
-
 // ================= REGISTER =================
 exports.register = async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password } = req.body;
 
     const existing = await User.findOne({ email });
     if (existing)
@@ -36,11 +31,11 @@ exports.register = async (req, res) => {
       name,
       email,
       password,
-      role,
+      role: null, // ✅ role later set होगा
       emailToken,
     });
 
-    // ================= SEND EMAIL =================
+    // EMAIL SEND
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
@@ -71,6 +66,39 @@ exports.register = async (req, res) => {
   }
 };
 
+// ================= SET ROLE =================
+exports.setRole = async (req, res) => {
+  try {
+
+    const { email, role } = req.body;
+
+    const user = await User.findOne({ email });
+
+    if (!user)
+      return res.status(404).json({ message: "User not found" });
+
+    user.role = role;
+    await user.save();
+
+    const accessToken = generateAccessToken(user._id);
+    const refreshToken = generateRefreshToken(user._id);
+
+    user.refreshToken = refreshToken;
+    await user.save();
+
+    res.json({
+      accessToken,
+      refreshToken,
+      role: user.role,
+      name: user.name,
+      email: user.email,
+    });
+
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Set role error" });
+  }
+};
 
 // ================= VERIFY EMAIL =================
 exports.verifyEmail = async (req, res) => {
@@ -93,10 +121,10 @@ exports.verifyEmail = async (req, res) => {
   }
 };
 
-
 // ================= LOGIN =================
 exports.login = async (req, res) => {
   try {
+
     const { email, password } = req.body;
 
     const user = await User.findOne({ email });
@@ -122,6 +150,10 @@ exports.login = async (req, res) => {
       accessToken,
       refreshToken,
       role: user.role,
+      name: user.name,
+      email: user.email,
+      companyName: user.companyName || "",
+      bio: user.bio || "",
     });
 
   } catch (err) {
@@ -129,83 +161,64 @@ exports.login = async (req, res) => {
   }
 };
 
-
-// ================= REFRESH TOKEN =================
-exports.refreshToken = async (req, res) => {
+// ================= GOOGLE LOGIN =================
+exports.googleLogin = async (req, res) => {
   try {
-    const { refreshToken } = req.body;
 
-    if (!refreshToken)
-      return res.status(401).json({ message: "No refresh token" });
+    const { name, email, googleId, role } = req.body;
 
-    const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+    let user = await User.findOne({ email });
 
-    const user = await User.findById(decoded.id);
+    let isNewUser = false;
 
-    if (!user || user.refreshToken !== refreshToken)
-      return res.status(403).json({ message: "Invalid refresh token" });
+    // ⭐ NEW USER
+    if (!user) {
+      isNewUser = true;
 
-    const newAccessToken = generateAccessToken(user._id);
+      user = await User.create({
+        name,
+        email,
+        password: googleId,
+        role: null, // role later
+        isVerified: true,
+      });
+    }
 
-    res.json({ accessToken: newAccessToken });
+    // ⭐ ROLE SET (if coming from select-role)
+    if (role) {
+      user.role = role;
+      await user.save();
+    }
 
-  } catch (err) {
-    res.status(403).json({ message: "Token expired" });
-  }
-};
+    const accessToken = generateAccessToken(user._id);
+    const refreshToken = generateRefreshToken(user._id);
 
-
-// ================= FORGOT PASSWORD =================
-exports.forgotPassword = async (req, res) => {
-  try {
-    const user = await User.findOne({ email: req.body.email });
-
-    if (!user)
-      return res.status(404).json({ message: "User not found" });
-
-    const resetToken = crypto.randomBytes(32).toString("hex");
-
-    user.resetToken = resetToken;
-    user.resetTokenExpire = Date.now() + 10 * 60 * 1000;
+    user.refreshToken = refreshToken;
     await user.save();
 
-    res.json({ resetToken });
-
-  } catch (err) {
-    res.status(500).json({ message: "Forgot password error" });
-  }
-};
-
-
-// ================= RESET PASSWORD =================
-exports.resetPassword = async (req, res) => {
-  try {
-    const user = await User.findOne({
-      resetToken: req.params.token,
-      resetTokenExpire: { $gt: Date.now() },
+    res.json({
+      accessToken,
+      refreshToken,
+      role: user.role,
+      name: user.name,
+      email: user.email,
+      companyName: user.companyName || "",
+      bio: user.bio || "",
+      isNewUser
     });
 
-    if (!user)
-      return res.status(400).json({ message: "Token expired" });
-
-    user.password = req.body.password;
-    user.resetToken = undefined;
-    user.resetTokenExpire = undefined;
-
-    await user.save();
-
-    res.json({ message: "Password reset successful" });
-
   } catch (err) {
-    res.status(500).json({ message: "Reset password error" });
+    console.log("Google login error:", err);
+    res.status(500).json({ message: "Google login error" });
   }
 };
 
-
-// ================= GET PROFILE =================
+// ================= PROFILE =================
 exports.getProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).select("-password -refreshToken");
+
+    const user = await User.findById(req.user._id)
+      .select("-password -refreshToken");
 
     res.json(user);
 
@@ -214,12 +227,13 @@ exports.getProfile = async (req, res) => {
   }
 };
 
-
 // ================= UPDATE PROFILE =================
 exports.updateProfile = async (req, res) => {
   try {
+
     const user = await User.findById(req.user._id);
 
+    // COMMON
     user.bio = req.body.bio || user.bio;
     user.location = req.body.location || user.location;
     user.skills = req.body.skills || user.skills;
@@ -227,19 +241,25 @@ exports.updateProfile = async (req, res) => {
     user.experience = req.body.experience || user.experience;
     user.socialLinks = req.body.socialLinks || user.socialLinks;
 
+    // EMPLOYER
+    user.companyName = req.body.companyName || user.companyName;
+    user.companyWebsite = req.body.companyWebsite || user.companyWebsite;
+    user.industry = req.body.industry || user.industry;
+
     await user.save();
 
     res.json({ message: "Profile updated successfully" });
 
   } catch (err) {
+    console.log(err);
     res.status(500).json({ message: "Profile update error" });
   }
 };
 
-
 // ================= UPLOAD RESUME =================
 exports.uploadResume = async (req, res) => {
   try {
+
     if (!req.file)
       return res.status(400).json({ message: "No file uploaded" });
 

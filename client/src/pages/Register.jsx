@@ -1,178 +1,129 @@
-// // import { useState } from "react";
-// // import api from "../api/axios";
-// // import { useNavigate } from "react-router-dom";
-
-// // const Register = () => {
-// //   const [name, setName] = useState("");
-// //   const [email, setEmail] = useState("");
-// //   const [password, setPassword] = useState("");
-
-// //   const navigate = useNavigate();
-
-// //   const handleRegister = async () => {
-// //     try {
-// //       await api.post("/auth/register", {
-// //         name,
-// //         email,
-// //         password,
-// //       });
-
-// //       alert("Registered successfully");
-// //       navigate("/login");
-// //     } catch (err) {
-// //       alert("Register failed");
-// //     }
-// //   };
-
-// //   return (
-// //     <div>
-// //       <h2>Register</h2>
-
-// //       <input
-// //         placeholder="Name"
-// //         onChange={(e) => setName(e.target.value)}
-// //       />
-
-// //       <input
-// //         placeholder="Email"
-// //         onChange={(e) => setEmail(e.target.value)}
-// //       />
-
-// //       <input
-// //         placeholder="Password"
-// //         type="password"
-// //         onChange={(e) => setPassword(e.target.value)}
-// //       />
-
-// //       <button onClick={handleRegister}>Register</button>
-// //     </div>
-// //   );
-// // };
-
-// // export default Register;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// import { useState } from "react";
-// import { API } from "../api/api";
-// import { useNavigate } from "react-router-dom";
-
-// const Register = () => {
-//   const [name,setName]=useState("");
-//   const [email,setEmail]=useState("");
-//   const [password,setPassword]=useState("");
-//   const navigate = useNavigate();
-
-//   const submit = async () => {
-//     try{
-//       await API.post("/auth/register",{name,email,password});
-//       alert("Registered!");
-//       navigate("/login");
-//     }catch (err) {
-//   console.log("REGISTER ERROR:", err.response?.data);
-//   alert(err.response?.data?.message || "Register failed");
-// }
-//   };
-
-//   return (
-//     <div className="flex justify-center items-center h-screen bg-gray-100">
-//       <div className="bg-white p-8 shadow rounded w-96">
-//         <h2 className="text-2xl font-bold mb-6">Register</h2>
-
-//         <input className="w-full p-3 mb-4 rounded bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Name" onChange={e=>setName(e.target.value)} />
-//         <input className="w-full p-3 mb-4 rounded bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Email" onChange={e=>setEmail(e.target.value)} />
-//         <input className="w-full p-3 mb-4 rounded bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Password" type="password" onChange={e=>setPassword(e.target.value)} />
-
-//         <button onClick={submit} className="w-full bg-indigo-600 text-white py-2 rounded">
-//           Register
-//         </button>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default Register;
-
-
 import { useState } from "react";
 import { API } from "../api/api";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import { GoogleLogin } from "@react-oauth/google";
+import { jwtDecode } from "jwt-decode";
 
 const Register = () => {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [role, setRole] = useState("candidate");
+
+  const [name,setName] = useState("");
+  const [email,setEmail] = useState("");
+  const [password,setPassword] = useState("");
+  const [confirmPassword,setConfirmPassword] = useState("");
+  const [showPassword,setShowPassword] = useState(false);
 
   const navigate = useNavigate();
 
+  // ================= NORMAL REGISTER =================
   const submit = async () => {
-    try {
-      await API.post("/auth/register", {
+
+    if(password !== confirmPassword){
+      alert("Passwords do not match");
+      return;
+    }
+
+    try{
+
+      await API.post("/auth/register",{
         name,
         email,
-        password,
-        role,
+        password
       });
 
-      alert("Registered!");
-      navigate("/login");
-    } catch (err) {
+      alert("Registration successful 🎉");
+
+      // ✅ SAVE TEMP DATA
+      localStorage.setItem("tempName", name);
+      localStorage.setItem("tempEmail", email);
+
+      // 👉 GO TO ROLE PAGE
+      navigate("/select-role");
+
+    }catch(err){
       alert(err.response?.data?.message || "Register failed");
     }
   };
 
+  // ================= GOOGLE REGISTER =================
+  const handleGoogleRegister = async (credentialResponse) => {
+
+    const decoded = jwtDecode(credentialResponse.credential);
+
+    // ✅ SAVE TEMP GOOGLE DATA
+    localStorage.setItem("tempGoogleName", decoded.name);
+    localStorage.setItem("tempGoogleEmail", decoded.email);
+    localStorage.setItem("tempGoogleId", decoded.sub);
+
+    navigate("/select-role");
+  };
+
   return (
-    <div className="flex justify-center items-center h-screen bg-gray-100">
-      <div className="bg-white p-8 shadow rounded w-96">
-        <h2 className="text-2xl font-bold mb-6">Register</h2>
+
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-200 via-purple-200 to-pink-200 px-4">
+
+      <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-xl">
+
+        <h2 className="text-3xl font-bold text-center mb-6">
+          Create Account
+        </h2>
 
         <input
-          className="w-full p-3 mb-4 rounded bg-gray-800 text-white"
-          placeholder="Name"
-          onChange={(e) => setName(e.target.value)}
+          placeholder="Full Name"
+          className="w-full p-3 mb-4 border rounded"
+          onChange={(e)=>setName(e.target.value)}
         />
 
         <input
-          className="w-full p-3 mb-4 rounded bg-gray-800 text-white"
           placeholder="Email"
-          onChange={(e) => setEmail(e.target.value)}
+          className="w-full p-3 mb-4 border rounded"
+          onChange={(e)=>setEmail(e.target.value)}
         />
+
+        <div className="relative mb-4">
+          <input
+            type={showPassword ? "text" : "password"}
+            placeholder="Password"
+            className="w-full p-3 border rounded"
+            onChange={(e)=>setPassword(e.target.value)}
+          />
+          <span
+            onClick={()=>setShowPassword(!showPassword)}
+            className="absolute right-3 top-3 cursor-pointer"
+          >
+            {showPassword ? "🙈" : "👁"}
+          </span>
+        </div>
 
         <input
-          className="w-full p-3 mb-4 rounded bg-gray-800 text-white"
-          placeholder="Password"
           type="password"
-          onChange={(e) => setPassword(e.target.value)}
+          placeholder="Confirm Password"
+          className="w-full p-3 mb-4 border rounded"
+          onChange={(e)=>setConfirmPassword(e.target.value)}
         />
-
-        <select
-          className="w-full p-3 mb-4 rounded bg-gray-800 text-white"
-          onChange={(e) => setRole(e.target.value)}
-        >
-          <option value="candidate">Candidate</option>
-          <option value="employer">Employer</option>
-        </select>
 
         <button
           onClick={submit}
-          className="w-full bg-indigo-600 text-white py-2 rounded"
+          className="w-full bg-indigo-600 text-white py-3 rounded"
         >
           Register
         </button>
+
+        <div className="text-center my-4">OR</div>
+
+        <div className="flex justify-center">
+          <GoogleLogin
+            onSuccess={handleGoogleRegister}
+            onError={()=>alert("Google failed")}
+          />
+        </div>
+
+        <p className="text-center mt-4">
+          Already have account?{" "}
+          <Link to="/login" className="text-indigo-600">
+            Login
+          </Link>
+        </p>
+
       </div>
     </div>
   );

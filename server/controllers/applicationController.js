@@ -4,8 +4,10 @@ const Application = require("../models/Application");
 // ============================
 // APPLY TO JOB (CANDIDATE)
 // ============================
+
 exports.applyJob = async (req, res) => {
   try {
+
     const jobId = req.params.id;
 
     if (!req.user) {
@@ -26,6 +28,9 @@ exports.applyJob = async (req, res) => {
       job: jobId,
       applicant: req.user._id,
       status: "pending",
+
+      // ⭐ SAVE RESUME FILE PATH
+      resume: req.file ? req.file.path : null
     });
 
     res.json({
@@ -38,6 +43,8 @@ exports.applyJob = async (req, res) => {
     res.status(500).json({ message: "Apply error" });
   }
 };
+
+
 
 
 

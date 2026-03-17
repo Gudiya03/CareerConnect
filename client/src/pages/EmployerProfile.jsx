@@ -1,95 +1,164 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { API } from "../api/api";
 
 const EmployerProfile = () => {
 
-  const [company, setCompany] = useState("CareerConnect");
-  const [website, setWebsite] = useState("https://careerconnect.com");
-  const [location, setLocation] = useState("India");
-  const [industry, setIndustry] = useState("Technology");
-  const [about, setAbout] = useState(
-    "We are building a modern job portal connecting employers with talented developers."
-  );
+const [profile, setProfile] = useState({
+companyName: "",
+companyWebsite: "",
+location: "",
+industry: "",
+bio: ""
+});
 
-  return (
-    <div className="max-w-4xl space-y-8">
+const [editMode, setEditMode] = useState(false);
 
-      {/* TITLE */}
+// ===== FETCH DATA =====
+const fetchProfile = async () => {
+try {
+const res = await API.get("/auth/profile");
+setProfile(res.data);
+} catch (err) {
+console.log(err);
+}
+};
 
-      <div>
-        <h1 className="text-3xl font-bold text-gray-800 dark:text-white">
-          Company Profile
-        </h1>
-        <p className="text-gray-500 dark:text-gray-400">
-          Manage your company information
-        </p>
-      </div>
+useEffect(() => {
+fetchProfile();
+}, []);
+
+// ===== SAVE =====
+const saveProfile = async () => {
+try {
+await API.put("/auth/profile", profile);
+alert("Profile updated");
+setEditMode(false);
+fetchProfile();
+} catch {
+alert("Update failed");
+}
+};
+
+return ( <div className="max-w-4xl mx-auto p-6">
 
 
-      {/* PROFILE CARD */}
+  <h1 className="text-3xl font-bold mb-6">Company Profile</h1>
 
-      <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl p-8">
+  <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border">
 
-        {/* LOGO */}
+    {/* VIEW MODE */}
+    {!editMode && (
+      <>
+        <div className="flex items-center gap-4 mb-6">
 
-        <div className="flex items-center gap-6 mb-6">
-
-          <div className="w-16 h-16 rounded-full bg-indigo-600 flex items-center justify-center text-white text-2xl font-bold">
-            {company.charAt(0)}
+          <div className="w-14 h-14 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xl font-bold">
+            {profile.companyName
+              ? profile.companyName.charAt(0)
+              : "C"}
           </div>
 
           <div>
-            <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
-              {company}
+            <h2 className="text-xl font-semibold">
+              {profile.companyName || "Company Name"}
             </h2>
 
-            <p className="text-gray-500 dark:text-gray-400">
-              {industry}
+            <p className="text-gray-500">
+              {profile.industry || "Industry"}
             </p>
           </div>
 
         </div>
 
+        <p><b>Website:</b> {profile.companyWebsite || "Not set"}</p>
+        <p><b>Location:</b> {profile.location || "Not set"}</p>
+        <p><b>Industry:</b> {profile.industry || "Not set"}</p>
 
-        {/* DETAILS */}
-
-        <div className="grid md:grid-cols-2 gap-6">
-
-          <div>
-            <p className="text-sm text-gray-500">Website</p>
-            <p className="font-medium">{website}</p>
-          </div>
-
-          <div>
-            <p className="text-sm text-gray-500">Location</p>
-            <p className="font-medium">{location}</p>
-          </div>
-
-          <div>
-            <p className="text-sm text-gray-500">Industry</p>
-            <p className="font-medium">{industry}</p>
-          </div>
-
+        <div className="mt-4">
+          <p className="text-sm text-gray-500">About</p>
+          <p>{profile.bio || "No description"}</p>
         </div>
 
+        <button
+          onClick={() => setEditMode(true)}
+          className="mt-6 bg-indigo-600 text-white px-5 py-2 rounded"
+        >
+          Edit Profile
+        </button>
+      </>
+    )}
 
-        {/* ABOUT */}
+    {/* EDIT MODE */}
+    {editMode && (
+      <>
+        <input
+          placeholder="Company Name"
+          value={profile.companyName}
+          onChange={(e) =>
+            setProfile({ ...profile, companyName: e.target.value })
+          }
+          className="w-full p-3 mb-3 border rounded"
+        />
 
-        <div className="mt-6">
+        <input
+          placeholder="Website"
+          value={profile.companyWebsite}
+          onChange={(e) =>
+            setProfile({ ...profile, companyWebsite: e.target.value })
+          }
+          className="w-full p-3 mb-3 border rounded"
+        />
 
-          <p className="text-sm text-gray-500 mb-2">
-            About Company
-          </p>
+        <input
+          placeholder="Location"
+          value={profile.location}
+          onChange={(e) =>
+            setProfile({ ...profile, location: e.target.value })
+          }
+          className="w-full p-3 mb-3 border rounded"
+        />
 
-          <p className="text-gray-700 dark:text-gray-300">
-            {about}
-          </p>
+        <input
+          placeholder="Industry"
+          value={profile.industry}
+          onChange={(e) =>
+            setProfile({ ...profile, industry: e.target.value })
+          }
+          className="w-full p-3 mb-3 border rounded"
+        />
 
+        <textarea
+          placeholder="About Company"
+          value={profile.bio}
+          onChange={(e) =>
+            setProfile({ ...profile, bio: e.target.value })
+          }
+          className="w-full p-3 mb-3 border rounded"
+        />
+
+        <div className="flex gap-4">
+          <button
+            onClick={saveProfile}
+            className="bg-green-600 text-white px-5 py-2 rounded"
+          >
+            Save
+          </button>
+
+          <button
+            onClick={() => setEditMode(false)}
+            className="bg-gray-500 text-white px-5 py-2 rounded"
+          >
+            Cancel
+          </button>
         </div>
+      </>
+    )}
 
-      </div>
+  </div>
 
-    </div>
-  );
+</div>
+
+
+);
 };
 
 export default EmployerProfile;

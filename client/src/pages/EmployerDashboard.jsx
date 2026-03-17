@@ -134,25 +134,38 @@ setShowEdit(true);
 
 /* ================= UPDATE JOB ================= */
 
+// ================= UPDATE JOB =================
+
 const updateJob = async()=>{
 
 try{
 
+const updatedSkills = skills
+  ? skills.split(",").map(s => s.trim())
+  : [];
+
 await API.put(`/jobs/${editJob._id}`,{
-title,
-company,
-location,
-salary,
-experience,
-skills: skills.split(","),
-description
+  title,
+  company,
+  location,
+  salary,
+  experience,
+  skills: updatedSkills,
+  description
 });
+
+// ✅ instant UI update (NO reload needed)
+setJobs(prev =>
+  prev.map(j =>
+    j._id === editJob._id
+      ? { ...j, title, company, location, salary, experience, skills: updatedSkills, description }
+      : j
+  )
+);
 
 toast.success("Job updated");
 
 setShowEdit(false);
-
-fetchJobs();
 
 }catch(err){
 
@@ -161,7 +174,6 @@ toast.error("Update failed")
 }
 
 };
-
 /* ================= VIEW APPLICANTS ================= */
 
 const viewApplicants = async(jobId)=>{
@@ -452,6 +464,94 @@ Delete
 </tbody>
 
 </table>
+{/* ================= EDIT MODAL ================= */}
+
+{showEdit && (
+
+<div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+
+  <div className="bg-white dark:bg-slate-900 p-6 rounded-xl w-[500px]">
+
+    <h2 className="text-xl font-semibold mb-4">
+      Edit Job
+    </h2>
+
+    <div className="grid gap-3">
+
+      <input
+        placeholder="Job Title"
+        value={title}
+        onChange={(e)=>setTitle(e.target.value)}
+        className="p-3 rounded bg-gray-100 dark:bg-slate-800"
+      />
+
+      <input
+        placeholder="Company"
+        value={company}
+        onChange={(e)=>setCompany(e.target.value)}
+        className="p-3 rounded bg-gray-100 dark:bg-slate-800"
+      />
+
+      <input
+        placeholder="Location"
+        value={location}
+        onChange={(e)=>setLocation(e.target.value)}
+        className="p-3 rounded bg-gray-100 dark:bg-slate-800"
+      />
+
+      <input
+        placeholder="Salary"
+        value={salary}
+        onChange={(e)=>setSalary(e.target.value)}
+        className="p-3 rounded bg-gray-100 dark:bg-slate-800"
+      />
+
+      <input
+        placeholder="Experience"
+        value={experience}
+        onChange={(e)=>setExperience(e.target.value)}
+        className="p-3 rounded bg-gray-100 dark:bg-slate-800"
+      />
+
+      <input
+        placeholder="Skills (React,Node)"
+        value={skills}
+        onChange={(e)=>setSkills(e.target.value)}
+        className="p-3 rounded bg-gray-100 dark:bg-slate-800"
+      />
+
+      <textarea
+        placeholder="Description"
+        value={description}
+        onChange={(e)=>setDescription(e.target.value)}
+        className="p-3 rounded bg-gray-100 dark:bg-slate-800"
+      />
+
+    </div>
+
+    <div className="flex gap-3 mt-5">
+
+      <button
+        onClick={updateJob}
+        className="bg-indigo-600 text-white px-5 py-2 rounded"
+      >
+        Update
+      </button>
+
+      <button
+        onClick={()=>setShowEdit(false)}
+        className="border px-5 py-2 rounded"
+      >
+        Cancel
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+)}
 
 </div>
 

@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Jobs from "./pages/Jobs";
+import JobDetails from "./pages/JobDetails"; // ⭐ NEW
 import EmployerDashboard from "./pages/EmployerDashboard";
 import MyApplications from "./pages/MyApplications";
 import Navbar from "./components/Navbar";
@@ -14,6 +15,9 @@ import EmployerJobs from "./pages/EmployerJobs";
 import EmployerApplicants from "./pages/EmployerApplicants";
 import EmployerAnalytics from "./pages/EmployerAnalytics";
 import EmployerProfile from "./pages/EmployerProfile";
+import SelectRole from "./pages/SelectRole";
+import EmployerSetup from "./pages/EmployerSetup";
+import CandidateSetup from "./pages/CandidateSetup";
 
 function Layout() {
   const location = useLocation();
@@ -37,6 +41,13 @@ function Layout() {
           <Route path="/register" element={<Register />} />
 
           <Route path="/jobs" element={<Jobs />} />
+          <Route path="/select-role" element={<SelectRole />} />
+          <Route path="/employer-setup" element={<EmployerSetup />} />
+          <Route path="/candidate-setup" element={<CandidateSetup />} />
+
+          {/* ⭐ NEW JOB DETAILS PAGE */}
+          <Route path="/job/:id" element={<JobDetails />} />
+
           <Route path="/my-applications" element={<MyApplications />} />
           <Route path="/job-applicants/:id" element={<JobApplicants />} />
           <Route path="/profile" element={<Profile />} />
@@ -47,10 +58,10 @@ function Layout() {
           <Route path="/employer" element={<EmployerLayout />}>
 
             <Route index element={<EmployerDashboard />} />
-  <Route path="jobs" element={<EmployerJobs />} />
-  <Route path="applicants" element={<EmployerApplicants />} />
-  <Route path="analytics" element={<EmployerAnalytics />} />
-  <Route path="profile" element={<EmployerProfile />} />
+            <Route path="jobs" element={<EmployerJobs />} />
+            <Route path="applicants" element={<EmployerApplicants />} />
+            <Route path="analytics" element={<EmployerAnalytics />} />
+            <Route path="profile" element={<EmployerProfile />} />
 
           </Route>
 

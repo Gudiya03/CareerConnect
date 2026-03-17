@@ -1,19 +1,23 @@
+
 const express = require("express");
 const router = express.Router();
 
 const { protect } = require("../middleware/authMiddleware");
+const upload = require("../middleware/uploadMiddleware");
+
 const applicationController = require("../controllers/applicationController");
 
-// APPLY TO JOB
-router.post("/:id", protect, applicationController.applyJob);
+// APPLY TO JOB (WITH RESUME UPLOAD)
+router.post("/:id", protect, upload.single("resume"), applicationController.applyJob);
 
-// GET MY APPLICATIONS (student)
+// GET MY APPLICATIONS
 router.get("/my", protect, applicationController.getMyApplications);
 
-// GET APPLICANTS FOR JOB (employer)
+// GET APPLICANTS FOR JOB
 router.get("/job/:id", protect, applicationController.getJobApplications);
 
-// UPDATE STATUS (accept/reject)
+// UPDATE STATUS
 router.put("/:id", protect, applicationController.updateStatus);
 
 module.exports = router;
+

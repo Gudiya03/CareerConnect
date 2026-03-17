@@ -2,24 +2,10 @@ import { useEffect, useState } from "react";
 import { API } from "../api/api";
 
 const Profile = () => {
-
-  const [profile, setProfile] = useState({
-    bio: "",
-    location: "",
-    skills: [],
-  });
-
-  const [skillInput, setSkillInput] = useState("");
+  const [profile, setProfile] = useState(null);
   const [editMode, setEditMode] = useState(false);
+  const [skillInput, setSkillInput] = useState("");
 
-  const userName = localStorage.getItem("userName");
-  const userEmail = localStorage.getItem("userEmail");
-
-  const avatarLetter = userName
-    ? userName.charAt(0).toUpperCase()
-    : "U";
-
-  // FETCH PROFILE
   const fetchProfile = async () => {
     try {
       const res = await API.get("/auth/profile");
@@ -33,201 +19,210 @@ const Profile = () => {
     fetchProfile();
   }, []);
 
-  // SAVE PROFILE
   const saveProfile = async () => {
     try {
       await API.put("/auth/profile", profile);
-      alert("Profile updated");
+      alert("Profile updated 🚀");
       setEditMode(false);
+      fetchProfile();
     } catch {
       alert("Update failed");
     }
   };
 
-  // ADD SKILL
   const addSkill = () => {
-    if (!skillInput) return;
+    if (!skillInput.trim()) return;
 
-    setProfile({
-      ...profile,
-      skills: [...profile.skills, skillInput],
-    });
+    setProfile((prev) => ({
+      ...prev,
+      skills: [...(prev.skills || []), skillInput.trim()],
+    }));
 
     setSkillInput("");
   };
 
+  if (!profile) return <p className="text-center mt-10">Loading...</p>;
+
+  const avatarLetter = profile.name
+    ? profile.name.charAt(0).toUpperCase()
+    : "U";
+
   return (
-    <div className="w-full min-h-screen bg-white dark:bg-[#020617] text-gray-900 dark:text-white">
+    <div className="min-h-screen bg-gray-100 dark:bg-[#020617] p-6 transition-colors duration-300">
+      <div className="max-w-5xl mx-auto">
 
-      <div className="max-w-4xl mx-auto px-6 py-12">
-
-        <h1 className="text-3xl font-bold mb-10 text-indigo-600 dark:text-indigo-400">
-          My Profile
-        </h1>
-
-        <div className="bg-white dark:bg-slate-900 p-8 rounded-xl border border-gray-200 dark:border-slate-700">
-
-          {/* PROFILE HEADER */}
-
-          <div className="flex items-center gap-4 mb-8">
-
-            <div className="w-14 h-14 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xl font-bold">
-              {avatarLetter}
-            </div>
-
-            <div>
-              <h2 className="text-xl font-semibold">
-                {userName || "User"}
-              </h2>
-
-              <p className="text-gray-500 dark:text-gray-400">
-                {userEmail || "No email"}
-              </p>
-            </div>
-
+        {/* HEADER */}
+        <div className="bg-gray-50 dark:bg-slate-900 p-6 rounded-xl border border-black dark:border-white shadow mb-6 flex items-center gap-6">
+          <div className="w-20 h-20 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center text-white text-2xl font-bold">
+            {avatarLetter}
           </div>
 
-          {/* VIEW MODE */}
+          <div>
+            <h2 className="text-2xl font-bold">{profile.name}</h2>
+            <p className="text-gray-600 dark:text-gray-400">{profile.email}</p>
+            <p className="text-sm text-indigo-500 capitalize">
+              {profile.role}
+            </p>
+          </div>
+        </div>
 
-          {!editMode && (
-            <div>
+        {/* CANDIDATE */}
+        {profile?.role === "candidate" && (
+          <div className="bg-gray-50 dark:bg-slate-900 p-6 rounded-xl border border-black dark:border-white shadow">
+            <h3 className="text-xl font-semibold mb-4">Candidate Profile</h3>
 
-              <div className="mb-6">
-                <h2 className="text-lg font-semibold mb-1">Bio</h2>
-                <p className="text-gray-600 dark:text-gray-400">
-                  {profile.bio || "No bio added"}
-                </p>
-              </div>
+            {!editMode ? (
+              <>
+                <p><strong>Bio:</strong> {profile.bio || "No bio added"}</p>
+                <p><strong>Location:</strong> {profile.location || "Not set"}</p>
 
-              <div className="mb-6">
-                <h2 className="text-lg font-semibold mb-1">Location</h2>
-                <p className="text-gray-600 dark:text-gray-400">
-                  {profile.location || "No location added"}
-                </p>
-              </div>
-
-              <div className="mb-6">
-                <h2 className="text-lg font-semibold mb-2">Skills</h2>
-
-                <div className="flex flex-wrap gap-2">
-                  {profile.skills?.length > 0 ? (
-                    profile.skills.map((skill, i) => (
-                      <span
-                        key={i}
-                        className="bg-indigo-600 text-white px-3 py-1 rounded-full text-sm"
-                      >
-                        {skill}
-                      </span>
-                    ))
-                  ) : (
-                    <p className="text-gray-400">No skills added</p>
-                  )}
+                <div className="mt-4">
+                  <strong>Skills:</strong>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {profile.skills?.length ? (
+                      profile.skills.map((s, i) => (
+                        <span key={i} className="bg-indigo-500 text-white px-3 py-1 rounded-full text-sm">
+                          {s}
+                        </span>
+                      ))
+                    ) : (
+                      <p className="text-gray-400">No skills</p>
+                    )}
+                  </div>
                 </div>
-              </div>
 
-              <button
-                onClick={() => setEditMode(true)}
-                className="bg-indigo-600 hover:bg-indigo-700 px-6 py-2 rounded text-white"
-              >
-                Edit Profile
-              </button>
-
-            </div>
-          )}
-
-          {/* EDIT MODE */}
-
-          {editMode && (
-            <div>
-
-              {/* BIO */}
-              <div className="mb-6">
-                <label className="block mb-2 font-medium">Bio</label>
-
+                <button
+                  onClick={() => setEditMode(true)}
+                  className="mt-6 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-lg transition"
+                >
+                  Edit Profile
+                </button>
+              </>
+            ) : (
+              <>
                 <textarea
-                  value={profile.bio}
+                  placeholder="Bio"
+                  value={profile.bio || ""}
                   onChange={(e) =>
-                    setProfile({ ...profile, bio: e.target.value })
+                    setProfile((prev) => ({ ...prev, bio: e.target.value }))
                   }
-                  className="w-full p-3 rounded bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-700"
+                  className="w-full p-3 mb-3 border border-black dark:border-white rounded bg-white dark:bg-slate-800"
                 />
-              </div>
-
-              {/* LOCATION */}
-              <div className="mb-6">
-                <label className="block mb-2 font-medium">Location</label>
 
                 <input
-                  value={profile.location}
+                  placeholder="Location"
+                  value={profile.location || ""}
                   onChange={(e) =>
-                    setProfile({ ...profile, location: e.target.value })
+                    setProfile((prev) => ({ ...prev, location: e.target.value }))
                   }
-                  className="w-full p-3 rounded bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-700"
+                  className="w-full p-3 mb-3 border border-black dark:border-white rounded bg-white dark:bg-slate-800"
                 />
-              </div>
 
-              {/* SKILLS */}
-              <div className="mb-6">
-
-                <label className="block mb-2 font-medium">Skills</label>
-
-                <div className="flex gap-3 mb-3">
-
+                <div className="flex gap-2 mb-3">
                   <input
                     value={skillInput}
                     onChange={(e) => setSkillInput(e.target.value)}
-                    className="flex-1 p-3 rounded bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-700"
+                    className="flex-1 p-2 border border-black dark:border-white rounded bg-white dark:bg-slate-800"
                   />
-
                   <button
                     onClick={addSkill}
-                    className="bg-indigo-600 px-4 rounded text-white"
+                    className="bg-indigo-600 text-white px-3 rounded"
                   >
                     Add
                   </button>
-
                 </div>
 
-                <div className="flex flex-wrap gap-2">
+                <div className="flex gap-3">
+                  <button
+                    onClick={saveProfile}
+                    className="bg-green-600 px-5 py-2 text-white rounded"
+                  >
+                    Save
+                  </button>
 
-                  {profile.skills?.map((skill, index) => (
-                    <span
-                      key={index}
-                      className="bg-indigo-600 text-white px-3 py-1 rounded-full text-sm"
-                    >
-                      {skill}
-                    </span>
-                  ))}
-
+                  <button
+                    onClick={() => setEditMode(false)}
+                    className="bg-gray-400 px-5 py-2 text-white rounded"
+                  >
+                    Cancel
+                  </button>
                 </div>
+              </>
+            )}
+          </div>
+        )}
 
-              </div>
+        {/* EMPLOYER */}
+        {profile?.role === "employer" && (
+          <div className="bg-gray-50 dark:bg-slate-900 p-6 rounded-xl border border-black dark:border-white shadow">
+            <h3 className="text-xl font-semibold mb-4">Company Profile</h3>
 
-              <div className="flex gap-4">
+            {!editMode ? (
+              <>
+                <p><strong>Company:</strong> {profile.companyName || "Not set"}</p>
+                <p><strong>Website:</strong> {profile.companyWebsite || "Not set"}</p>
+                <p><strong>Location:</strong> {profile.location || "Not set"}</p>
+                <p><strong>About:</strong> {profile.bio || "No description"}</p>
 
                 <button
-                  onClick={saveProfile}
-                  className="bg-green-600 px-6 py-2 rounded text-white"
+                  onClick={() => setEditMode(true)}
+                  className="mt-6 bg-indigo-600 text-white px-5 py-2 rounded"
                 >
-                  Save
+                  Edit Company
                 </button>
+              </>
+            ) : (
+              <>
+                <input
+                  placeholder="Company Name"
+                  value={profile.companyName || ""}
+                  onChange={(e) =>
+                    setProfile((prev) => ({ ...prev, companyName: e.target.value }))
+                  }
+                  className="w-full p-3 mb-3 border border-black dark:border-white rounded bg-white dark:bg-slate-800"
+                />
 
-                <button
-                  onClick={() => setEditMode(false)}
-                  className="bg-gray-500 px-6 py-2 rounded text-white"
-                >
-                  Cancel
-                </button>
+                <input
+                  placeholder="Website"
+                  value={profile.companyWebsite || ""}
+                  onChange={(e) =>
+                    setProfile((prev) => ({ ...prev, companyWebsite: e.target.value }))
+                  }
+                  className="w-full p-3 mb-3 border border-black dark:border-white rounded bg-white dark:bg-slate-800"
+                />
 
-              </div>
+                <input
+                  placeholder="Location"
+                  value={profile.location || ""}
+                  onChange={(e) =>
+                    setProfile((prev) => ({ ...prev, location: e.target.value }))
+                  }
+                  className="w-full p-3 mb-3 border border-black dark:border-white rounded bg-white dark:bg-slate-800"
+                />
 
-            </div>
-          )}
+                <textarea
+                  placeholder="Company Description"
+                  value={profile.bio || ""}
+                  onChange={(e) =>
+                    setProfile((prev) => ({ ...prev, bio: e.target.value }))
+                  }
+                  className="w-full p-3 mb-3 border border-black dark:border-white rounded bg-white dark:bg-slate-800"
+                />
 
-        </div>
+                <div className="flex gap-3">
+                  <button className="bg-green-600 px-5 py-2 text-white rounded" onClick={saveProfile}>
+                    Save
+                  </button>
+                  <button className="bg-gray-400 px-5 py-2 text-white rounded" onClick={() => setEditMode(false)}>
+                    Cancel
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
 
       </div>
-
     </div>
   );
 };

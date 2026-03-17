@@ -5,53 +5,30 @@ const {
   register,
   login,
   verifyEmail,
-  refreshToken,
-  forgotPassword,
-  resetPassword,
   uploadResume,
-  getProfile,          // ✅ added
-  updateProfile        // ✅ added
+  getProfile,
+  updateProfile,
+  googleLogin,
+  setRole
 } = require("../controllers/authController");
 
 const { protect } = require("../middleware/authMiddleware");
 const upload = require("../middleware/uploadMiddleware");
 
-
-// ================= REGISTER =================
+// ================= AUTH =================
 router.post("/register", register);
+router.post("/login", login);
+router.post("/google", googleLogin);
+router.put("/set-role", setRole);
 
-
-// ================= VERIFY EMAIL =================
+// ================= VERIFY =================
 router.get("/verify-email/:token", verifyEmail);
 
-
-// ================= LOGIN =================
-router.post("/login", login);
-
-
-// ================= REFRESH TOKEN =================
-router.post("/refresh-token", refreshToken);
-
-
-// ================= FORGOT PASSWORD =================
-router.post("/forgot-password", forgotPassword);
-
-
-// ================= RESET PASSWORD =================
-router.post("/reset-password/:token", resetPassword);
-
-
 // ================= PROFILE =================
-router.get("/profile", protect, getProfile);      // ✅ GET PROFILE
-router.put("/profile", protect, updateProfile);  // ✅ UPDATE PROFILE
+router.get("/profile", protect, getProfile);
+router.put("/profile", protect, updateProfile);
 
-
-// ================= UPLOAD RESUME =================
-router.post(
-  "/upload-resume",
-  protect,
-  upload.single("resume"),
-  uploadResume
-);
+// ================= RESUME =================
+router.post("/upload-resume", protect, upload.single("resume"), uploadResume);
 
 module.exports = router;
