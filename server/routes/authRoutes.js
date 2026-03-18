@@ -9,7 +9,9 @@ const {
   getProfile,
   updateProfile,
   googleLogin,
-  setRole
+  setRole,
+  forgotPassword,   // ✅ ADD
+  resetPassword   // ✅ ADD
 } = require("../controllers/authController");
 
 const { protect } = require("../middleware/authMiddleware");
@@ -27,6 +29,8 @@ router.get("/verify-email/:token", verifyEmail);
 // ================= PROFILE =================
 router.get("/profile", protect, getProfile);
 router.put("/profile", protect, updateProfile);
+router.post("/forgot-password", forgotPassword);
+router.post("/reset-password/:token", resetPassword);
 
 // ================= RESUME =================
 router.post("/upload-resume", protect, upload.single("resume"), uploadResume);

@@ -275,3 +275,76 @@ exports.uploadResume = async (req, res) => {
     res.status(500).json({ message: "Resume upload error" });
   }
 };
+exports.forgotPassword = async (req, res) => {
+  try {
+    const user = await User.findOne({ email: req.body.email });
+
+    if (!user)
+      return res.status(404).json({ message: "User not found" });
+
+    const resetToken = crypto.randomBytes(32).toString("hex");
+
+    user.resetToken = crypto
+      .createHash("sha256")
+      .update(resetToken)
+      .digest("hex");
+
+    user.resetTokenExpire = Date.now() + 15 * 60 * 1000;
+
+    await user.save();
+
+    const resetURL = `http://localhost:5173/reset-password/${resetToken}`;
+
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    await transporter.sendMail({
+      to: user.email,
+      subject: "Password Reset",
+      html: `<a href="${resetURL}">Reset Password</a>`,
+    });
+
+    res.json({ message: "Reset link sent" });
+
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Error sending email" });
+  }
+};
+exports.resetPassword = async (req, res) => {
+  try {
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(req.params.token)
+      .digest("hex");
+
+    const user = await User.findOne({
+      resetToken: hashedToken,
+      resetTokenExpire: { $gt: Date.now() },
+    });
+
+    console.log("USER FOUND:", user); // 👈 DEBUG
+
+    if (!user) {
+      return res.status(400).json({ message: "Token invalid or expired" });
+    }
+
+    user.password = req.body.password;
+
+    user.resetToken = undefined;
+    user.resetTokenExpire = undefined;
+
+    await user.save();
+
+    res.json({ message: "Password reset successful" });
+
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Reset password error" });
+  }
+};
