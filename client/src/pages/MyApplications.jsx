@@ -1,134 +1,105 @@
 import { useEffect, useState } from "react";
 import { API } from "../api/api";
-import React from "react";
 
 const MyApplications = () => {
   const [applications, setApplications] = useState([]);
   const [file, setFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
 
   const fetchApplications = async () => {
-    try {
-      const res = await API.get("/applications/my");
-      setApplications(res.data);
-    } catch (err) {
-      console.log(err);
-    }
+    try { const res = await API.get("/applications/my"); setApplications(res.data); }
+    catch (err) { console.log(err); }
   };
 
-  useEffect(() => {
-    fetchApplications();
-  }, []);
+  useEffect(() => { fetchApplications(); }, []);
 
-  // RESUME UPLOAD
   const uploadResume = async () => {
-    if (!file) {
-      alert("Select file first");
-      return;
-    }
-
+    if (!file) { alert("Select file first"); return; }
+    setUploading(true);
     const formData = new FormData();
     formData.append("resume", file);
-
     try {
-      await API.post("/auth/upload-resume", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-
+      await API.post("/auth/upload-resume", formData, { headers: { "Content-Type": "multipart/form-data" } });
       alert("Resume uploaded successfully");
+      setFile(null);
     } catch (err) {
       console.log(err.response?.data || err.message);
       alert("Upload failed");
     }
+    setUploading(false);
+  };
+
+  const StatusBadge = ({ status }) => {
+    const map = {
+      accepted: "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400",
+      rejected: "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400",
+    };
+    return (
+      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase ${map[status] || "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"}`}>
+        {status}
+      </span>
+    );
   };
 
   return (
-    <div className="w-full min-h-screen bg-white dark:bg-[#020617] text-gray-900 dark:text-white p-6 md:p-10 transition-colors duration-300">
+    <div className="w-full min-h-screen bg-[#f5f5f7] dark:bg-[#0c0c14] text-gray-900 dark:text-white">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-8">
 
-      {/* ===== UPLOAD SECTION ===== */}
-      <div className="mb-12 max-w-2xl mx-auto">
-        <div className="bg-gray-100 dark:bg-slate-900 p-6 rounded-2xl border border-black dark:border-white shadow-sm hover:shadow-xl transition duration-300">
+        {/* RESUME UPLOAD */}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm p-5 sm:p-6">
+          <h2 className="text-sm font-semibold text-gray-800 dark:text-white mb-1">Resume</h2>
+          <p className="text-xs text-gray-400 mb-4">Upload your latest resume so employers can view it.</p>
 
-          <h2 className="text-xl font-semibold mb-2 tracking-wide">
-            📄 Resume
-          </h2>
-
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
-            Upload your latest resume so employers can view it.
-          </p>
-
-          <div className="flex flex-col md:flex-row gap-4 md:items-center">
-
+          <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
             <input
               type="file"
               onChange={(e) => setFile(e.target.files[0])}
-              className="text-sm w-full border border-black dark:border-white rounded-lg px-3 py-2 bg-gray-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+              className="flex-1 text-sm text-gray-500 dark:text-gray-400 cursor-pointer file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-600 dark:file:bg-indigo-500/10 dark:file:text-indigo-400 hover:file:bg-indigo-100 transition"
             />
-
             <button
               onClick={uploadResume}
-              className="px-5 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium hover:scale-105 hover:shadow-lg transition-all duration-200"
+              disabled={uploading}
+              className="px-5 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm shadow-indigo-500/20 disabled:opacity-60 flex-shrink-0"
             >
-              Upload Resume
+              {uploading ? "Uploading…" : "Upload Resume"}
             </button>
-
           </div>
         </div>
-      </div>
 
-      {/* ===== TITLE ===== */}
-      <h1 className="text-3xl md:text-4xl font-bold mb-10 text-center bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-500 text-transparent bg-clip-text">
-        My Applications
-      </h1>
+        {/* TITLE */}
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white tracking-tight">My Applications</h1>
+          <p className="text-sm text-gray-400 mt-0.5">{applications.length} application{applications.length !== 1 ? "s" : ""}</p>
+        </div>
 
-      {/* ===== EMPTY STATE ===== */}
-      {applications.length === 0 && (
-        <p className="text-gray-500 dark:text-gray-400 text-center text-lg">
-          You have not applied to any jobs yet.
-        </p>
-      )}
-
-      {/* ===== APPLICATION LIST ===== */}
-      <div className="max-w-4xl mx-auto space-y-6">
-
-        {applications.map((app) => (
-          <div
-            key={app._id}
-            className="bg-gray-100 dark:bg-slate-900 p-6 rounded-2xl border border-black dark:border-white shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
-          >
-
-            <div className="flex justify-between items-start mb-3">
-
-              <h2 className="text-xl font-semibold hover:text-indigo-600 dark:hover:text-indigo-400 transition">
-                {app.job?.title}
-              </h2>
-
-              <span
-                className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                  app.status === "accepted"
-                    ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
-                    : app.status === "rejected"
-                    ? "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300"
-                    : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300"
-                }`}
-              >
-                {app.status?.toUpperCase()}
-              </span>
-
-            </div>
-
-            <p className="text-indigo-600 dark:text-indigo-400 mb-2 text-sm font-medium">
-              {app.job?.company}
-            </p>
-
-            <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
-              {app.job?.description}
-            </p>
-
+        {/* EMPTY */}
+        {applications.length === 0 && (
+          <div className="py-16 text-center">
+            <p className="text-sm text-gray-300 dark:text-gray-600">You haven't applied to any jobs yet.</p>
           </div>
-        ))}
+        )}
 
+        {/* APPLICATION LIST */}
+        <div className="space-y-4">
+          {applications.map((app) => (
+            <div
+              key={app._id}
+              className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 p-5 sm:p-6"
+            >
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-3">
+                <div>
+                  <h2 className="text-base font-bold text-gray-900 dark:text-white leading-snug">{app.job?.title}</h2>
+                  <p className="text-sm font-medium text-indigo-500 mt-0.5">{app.job?.company}</p>
+                </div>
+                <StatusBadge status={app.status} />
+              </div>
+
+              <p className="text-[13px] text-gray-500 dark:text-gray-400 leading-relaxed line-clamp-3">
+                {app.job?.description}
+              </p>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

@@ -18,6 +18,8 @@ import EmployerProfile from "./pages/EmployerProfile";
 import SelectRole from "./pages/SelectRole";
 import EmployerSetup from "./pages/EmployerSetup";
 import CandidateSetup from "./pages/CandidateSetup";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 
 function Layout() {
   const location = useLocation();
@@ -44,6 +46,8 @@ function Layout() {
           <Route path="/select-role" element={<SelectRole />} />
           <Route path="/employer-setup" element={<EmployerSetup />} />
           <Route path="/candidate-setup" element={<CandidateSetup />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
 
           {/* ⭐ NEW JOB DETAILS PAGE */}
           <Route path="/job/:id" element={<JobDetails />} />

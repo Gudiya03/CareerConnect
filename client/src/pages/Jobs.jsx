@@ -207,17 +207,10 @@ const Jobs = () => {
 
                   <div className="flex flex-wrap gap-2 text-xs mb-4">
 
-                    {job.location && (
-                      <span className="bg-gray-100 px-2 py-1 rounded">
-                        📍 {job.location}
-                      </span>
-                    )}
+                    📍 {job.location}
+                    <br></br><br></br>
 
-                    {job.salary && (
-                      <span className="bg-gray-100 px-2 py-1 rounded">
-                        💰 {job.salary}
-                      </span>
-                    )}
+                    💰 {job.salary}
 
                   </div>
 
