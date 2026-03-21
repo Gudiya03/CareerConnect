@@ -36,7 +36,8 @@ exports.register = async (req, res) => {
       emailToken,
     });
 
-    // ✅ transporter (better for Render)
+    const verifyURL = `${process.env.FRONTEND_URL}/verify/${emailToken}`;
+
     const transporter = nodemailer.createTransport({
       host: "smtp.gmail.com",
       port: 587,
@@ -48,14 +49,12 @@ exports.register = async (req, res) => {
       connectionTimeout: 10000,
     });
 
-    const verifyURL = `${process.env.FRONTEND_URL}/verify/${emailToken}`;
-
-    // ✅ SAFE EMAIL (IMPORTANT)
+    // ✅ EMAIL SAFE BLOCK
     try {
       await transporter.sendMail({
-        from: process.env.EMAIL_USER, // ✅ REQUIRED
+        from: process.env.EMAIL_USER,
         to: email,
-        subject: "Verify Your Email - Career Connect",
+        subject: "Verify Your Email",
         html: `
           <h2>Email Verification</h2>
           <p>Click below:</p>
@@ -64,20 +63,19 @@ exports.register = async (req, res) => {
       });
     } catch (emailErr) {
       console.log("Email failed:", emailErr.message);
-      // ❌ DO NOT THROW ERROR
+      // ❗ DON'T THROW ERROR
     }
 
-    // ✅ ALWAYS SUCCESS RESPONSE
-    return res.json({
+    // ✅ ALWAYS SUCCESS
+    return res.status(201).json({
       message: "Registered successfully",
     });
 
   } catch (err) {
-    console.log(err);
+    console.log("Register error:", err);
 
-    // ❌ DON'T CRASH USER FLOW
-    return res.json({
-      message: "Registered, but something went wrong",
+    return res.status(500).json({
+      message: "Something went wrong",
     });
   }
 };
