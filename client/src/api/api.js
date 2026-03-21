@@ -12,9 +12,10 @@ API.interceptors.request.use((req) => {
     req.headers.Authorization = `Bearer ${accessToken}`;
   }
 
+  req.headers["Content-Type"] = "application/json";
+
   return req;
 });
-
 
 // ================= RESPONSE INTERCEPTOR =================
 API.interceptors.response.use(
@@ -23,7 +24,6 @@ API.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // If access token expired
     if (
       error.response &&
       error.response.status === 401 &&
@@ -34,7 +34,12 @@ API.interceptors.response.use(
       try {
         const refreshToken = localStorage.getItem("refreshToken");
 
-        // ✅ FIXED LINE (IMPORTANT)
+        if (!refreshToken) {
+          localStorage.clear();
+          window.location.href = "/login";
+          return;
+        }
+
         const res = await axios.post(
           `${import.meta.env.VITE_API_URL}/api/auth/refresh-token`,
           { refreshToken }
@@ -44,13 +49,11 @@ API.interceptors.response.use(
 
         localStorage.setItem("accessToken", newAccessToken);
 
-        originalRequest.headers.Authorization =
-          `Bearer ${newAccessToken}`;
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
 
         return API(originalRequest);
 
       } catch (err) {
-        // Refresh token expired → logout
         localStorage.clear();
         window.location.href = "/login";
       }

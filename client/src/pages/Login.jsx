@@ -10,11 +10,10 @@ const inp =
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // ✅ NORMAL LOGIN (FINAL FIXED)
+  // ✅ NORMAL LOGIN
   const submit = async () => {
     if (!email || !password) {
       alert("Please fill all fields");
@@ -24,39 +23,40 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const res = await API.post("/api/auth/login", {
+      console.log("Sending:", { email, password });
+
+      const res = await API.post("/auth/login", {
         email,
         password,
       });
 
-      // ✅ STORE DATA
+      console.log("Response:", res.data);
+
       localStorage.setItem("accessToken", res.data.accessToken);
       localStorage.setItem("refreshToken", res.data.refreshToken);
       localStorage.setItem("role", res.data.role);
 
-      // ✅ REDIRECT
       navigate(res.data.role === "employer" ? "/employer" : "/jobs");
 
     } catch (err) {
-      console.error(err);
+      console.log("FULL ERROR:", err.response);
       alert(err.response?.data?.message || "Login failed");
     } finally {
       setLoading(false);
     }
   };
 
-  // ✅ GOOGLE LOGIN (FINAL FIXED)
+  // ✅ GOOGLE LOGIN
   const handleGoogleLogin = async (credentialResponse) => {
     try {
       const decoded = jwtDecode(credentialResponse.credential);
 
-      const res = await API.post("/api/auth/google", {
+      const res = await API.post("/auth/google", {
         name: decoded.name,
         email: decoded.email,
         googleId: decoded.sub,
       });
 
-      // ✅ STORE DATA
       localStorage.setItem("accessToken", res.data.accessToken);
       localStorage.setItem("refreshToken", res.data.refreshToken);
       localStorage.setItem("role", res.data.role);
@@ -64,7 +64,6 @@ const Login = () => {
       localStorage.setItem("email", res.data.email);
       localStorage.setItem("companyName", res.data.companyName || "");
 
-      // ✅ NEW USER FLOW
       if (res.data.isNewUser) {
         localStorage.setItem("tempGoogleName", decoded.name);
         localStorage.setItem("tempGoogleEmail", decoded.email);
@@ -73,7 +72,6 @@ const Login = () => {
         return;
       }
 
-      // ✅ REDIRECT BASED ON ROLE
       if (res.data.role === "employer") {
         navigate(!res.data.companyName ? "/employer-setup" : "/employer");
       } else {
@@ -88,7 +86,6 @@ const Login = () => {
 
   return (
     <div className="min-h-screen grid md:grid-cols-2">
-
       <div className="flex items-center justify-center bg-[#f5f5f7] dark:bg-[#0c0c14] px-4 py-10">
         <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm p-7 sm:p-8">
 
@@ -105,7 +102,7 @@ const Login = () => {
             />
 
             <input
-              type={showPassword ? "text" : "password"}
+              type="password"
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -134,7 +131,6 @@ const Login = () => {
 
         </div>
       </div>
-
     </div>
   );
 };

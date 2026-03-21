@@ -124,7 +124,6 @@ exports.verifyEmail = async (req, res) => {
 // ================= LOGIN =================
 exports.login = async (req, res) => {
   try {
-
     const { email, password } = req.body;
 
     const user = await User.findOne({ email });
@@ -137,8 +136,7 @@ exports.login = async (req, res) => {
     if (!match)
       return res.status(400).json({ message: "Invalid credentials" });
 
-    if (!user.isVerified)
-      return res.status(403).json({ message: "Verify your email first" });
+    // ❌ verification removed for testing
 
     const accessToken = generateAccessToken(user._id);
     const refreshToken = generateRefreshToken(user._id);
