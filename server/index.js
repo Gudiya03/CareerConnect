@@ -15,8 +15,16 @@ const app = express();
 app.use(express.json());
 
 // ✅ FINAL CORS FIX (NO OPTIONS LINE)
+// app.use(cors({
+//   origin: true,
+//   credentials: true
+// }));
+
 app.use(cors({
-  origin: true,
+  origin: [
+    "http://localhost:5173",
+    "https://career-connect-vert-kappa.vercel.app"
+  ],
   credentials: true
 }));
 
