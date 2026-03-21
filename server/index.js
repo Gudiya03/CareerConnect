@@ -14,7 +14,7 @@ const app = express();
 // ✅ MIDDLEWARE
 app.use(express.json());
 
-// ✅ FINAL CORS FIX (IMPORTANT)
+// ✅ FINAL CORS FIX (NO OPTIONS LINE)
 app.use(cors({
   origin: true,
   credentials: true
