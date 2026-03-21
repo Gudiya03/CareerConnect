@@ -10,8 +10,9 @@ const {
   updateProfile,
   googleLogin,
   setRole,
-  forgotPassword,   // ✅ ADD
-  resetPassword   // ✅ ADD
+  forgotPassword,
+  resetPassword,
+  refreshToken // ✅ ADD THIS
 } = require("../controllers/authController");
 
 const { protect } = require("../middleware/authMiddleware");
@@ -21,6 +22,7 @@ const upload = require("../middleware/uploadMiddleware");
 router.post("/register", register);
 router.post("/login", login);
 router.post("/google", googleLogin);
+router.post("/refresh-token", refreshToken); // ✅ ADD THIS
 router.put("/set-role", setRole);
 
 // ================= VERIFY =================

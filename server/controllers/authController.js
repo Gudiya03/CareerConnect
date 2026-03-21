@@ -353,3 +353,30 @@ exports.resetPassword = async (req, res) => {
     res.status(500).json({ message: "Reset password error" });
   }
 };
+
+// ================= REFRESH TOKEN =================
+exports.refreshToken = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken)
+      return res.status(401).json({ message: "No token provided" });
+
+    const decoded = jwt.verify(
+      refreshToken,
+      process.env.JWT_REFRESH_SECRET
+    );
+
+    const user = await User.findById(decoded.id);
+
+    if (!user || user.refreshToken !== refreshToken)
+      return res.status(403).json({ message: "Invalid refresh token" });
+
+    const newAccessToken = generateAccessToken(user._id);
+
+    res.json({ accessToken: newAccessToken });
+
+  } catch (err) {
+    res.status(403).json({ message: "Token expired or invalid" });
+  }
+};
