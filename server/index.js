@@ -10,31 +10,33 @@ const applicationRoutes = require("./routes/applicationRoutes");
 dotenv.config();
 
 const app = express();
+
+// ✅ MIDDLEWARE
 app.use(express.json());
+
+// ✅ FINAL CORS FIX (IMPORTANT)
 app.use(cors({
-  origin: [
-    "http://localhost:5173",
-    "https://career-connect-nu.vercel.app"
-  ],
+  origin: true,
   credentials: true
 }));
+
+// STATIC
 app.use("/uploads", express.static("uploads"));
 
-
 // ROUTES
-app.use("/api/auth", authRoutes);        // login / register
-app.use("/api/jobs", jobRoutes);         // create / list jobs
-//app.use("/api/apply", applicationRoutes);
- // apply + applications
- app.use("/api/applications", applicationRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/jobs", jobRoutes);
+app.use("/api/applications", applicationRoutes);
 
+// TEST ROUTE
 app.get("/", (req, res) => {
   res.send("Backend running 🚀");
 });
 
-const PORT = 5000;
+// PORT
+const PORT = process.env.PORT || 5000;
 
-// CONNECT DB → START SERVER
+// DB CONNECT
 mongoose
   .connect(process.env.MONGO_URI, {
     serverSelectionTimeoutMS: 5000,
