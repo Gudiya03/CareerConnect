@@ -13,25 +13,45 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
+const submit = async () => {
+  if (password !== confirmPassword) {
+    alert("Passwords do not match");
+    return;
+  }
 
-  const submit = async () => {
-    if (password !== confirmPassword) {
-      alert("Passwords do not match");
-      return;
+  try {
+    setLoading(true);
+
+    const res = await API.post("/auth/register", {
+      name,
+      email,
+      password,
+    });
+
+    console.log("REGISTER RESPONSE:", res);
+
+    // ✅ ALWAYS SUCCESS IF REQUEST DIDN'T THROW
+    alert(res.data?.message || "Registration successful 🎉");
+
+    localStorage.setItem("tempName", name);
+    localStorage.setItem("tempEmail", email);
+
+    navigate("/select-role");
+
+  } catch (err) {
+    console.log("REGISTER ERROR:", err);
+
+    // ✅ PROPER ERROR HANDLING
+    if (err.response) {
+      alert(err.response.data?.message || "Register failed");
+    } else {
+      alert("Network error / Server down");
     }
-    try {
-      setLoading(true);
-      await API.post("/auth/register", { name, email, password });
-      alert("Registration successful 🎉");
-      localStorage.setItem("tempName", name);
-      localStorage.setItem("tempEmail", email);
-      navigate("/select-role");
-    } catch (err) {
-      alert(err.response?.data?.message || "Register failed");
-    } finally {
-      setLoading(false);
-    }
-  };
+
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleGoogleRegister = async (credentialResponse) => {
     const decoded = jwtDecode(credentialResponse.credential);
