@@ -19,6 +19,11 @@ const userSchema = mongoose.Schema(
     required: true 
   },
 
+  // ✅ ADD THIS (IMPORTANT)
+  googleId: {
+    type: String,
+  },
+
   role: {
     type: String,
     enum: ["candidate", "employer", "admin"],
@@ -72,19 +77,19 @@ const userSchema = mongoose.Schema(
     github: String,
     portfolio: String,
   },
+
   // ================= EMPLOYER PROFILE =================
-companyName: {
-type: String,
-},
+  companyName: {
+    type: String,
+  },
 
-companyWebsite: {
-type: String,
-},
+  companyWebsite: {
+    type: String,
+  },
 
-industry: {
-type: String,
-},
-
+  industry: {
+    type: String,
+  },
 
   // ================= AUTH =================
   isVerified: {

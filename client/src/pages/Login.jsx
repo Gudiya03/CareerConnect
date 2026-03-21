@@ -14,7 +14,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // ✅ NORMAL LOGIN FIXED
+  // ✅ NORMAL LOGIN (FINAL FIXED)
   const submit = async () => {
     if (!email || !password) {
       alert("Please fill all fields");
@@ -24,31 +24,39 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const res = await API.post("/api/auth/login", { email, password });
+      const res = await API.post("/api/auth/login", {
+        email,
+        password,
+      });
 
+      // ✅ STORE DATA
       localStorage.setItem("accessToken", res.data.accessToken);
       localStorage.setItem("refreshToken", res.data.refreshToken);
       localStorage.setItem("role", res.data.role);
 
+      // ✅ REDIRECT
       navigate(res.data.role === "employer" ? "/employer" : "/jobs");
-    } catch (err) {
-      alert(err.response?.data?.message || "Login failed");
-    }
 
-    setLoading(false);
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || "Login failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // ✅ GOOGLE LOGIN FIXED
+  // ✅ GOOGLE LOGIN (FINAL FIXED)
   const handleGoogleLogin = async (credentialResponse) => {
-    const decoded = jwtDecode(credentialResponse.credential);
-
     try {
+      const decoded = jwtDecode(credentialResponse.credential);
+
       const res = await API.post("/api/auth/google", {
         name: decoded.name,
         email: decoded.email,
         googleId: decoded.sub,
       });
 
+      // ✅ STORE DATA
       localStorage.setItem("accessToken", res.data.accessToken);
       localStorage.setItem("refreshToken", res.data.refreshToken);
       localStorage.setItem("role", res.data.role);
@@ -56,6 +64,7 @@ const Login = () => {
       localStorage.setItem("email", res.data.email);
       localStorage.setItem("companyName", res.data.companyName || "");
 
+      // ✅ NEW USER FLOW
       if (res.data.isNewUser) {
         localStorage.setItem("tempGoogleName", decoded.name);
         localStorage.setItem("tempGoogleEmail", decoded.email);
@@ -64,12 +73,15 @@ const Login = () => {
         return;
       }
 
+      // ✅ REDIRECT BASED ON ROLE
       if (res.data.role === "employer") {
         navigate(!res.data.companyName ? "/employer-setup" : "/employer");
       } else {
         navigate(!res.data.bio ? "/candidate-setup" : "/jobs");
       }
-    } catch {
+
+    } catch (err) {
+      console.error(err);
       alert("Google login failed");
     }
   };
@@ -119,6 +131,7 @@ const Login = () => {
           <p className="text-center text-sm mt-4">
             Don't have an account? <Link to="/register">Register</Link>
           </p>
+
         </div>
       </div>
 

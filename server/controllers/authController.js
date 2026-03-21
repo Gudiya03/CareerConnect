@@ -164,39 +164,44 @@ exports.login = async (req, res) => {
 // ================= GOOGLE LOGIN =================
 exports.googleLogin = async (req, res) => {
   try {
-
     const { name, email, googleId, role } = req.body;
 
+    // 🔍 Find user
     let user = await User.findOne({ email });
 
     let isNewUser = false;
 
-    // ⭐ NEW USER
+    // ================= NEW USER =================
     if (!user) {
       isNewUser = true;
 
-      user = await User.create({
+      user = new User({
         name,
         email,
-        password: googleId,
-        role: null, // role later
+        googleId, // ✅ store googleId separately (better practice)
+        password: googleId + Date.now(), // ✅ dummy unique password
+        role: null,
         isVerified: true,
       });
+
+      await user.save();
     }
 
-    // ⭐ ROLE SET (if coming from select-role)
-    if (role) {
+    // ================= SET ROLE =================
+    if (role && !user.role) {
       user.role = role;
       await user.save();
     }
 
+    // ================= TOKENS =================
     const accessToken = generateAccessToken(user._id);
     const refreshToken = generateRefreshToken(user._id);
 
     user.refreshToken = refreshToken;
     await user.save();
 
-    res.json({
+    // ================= RESPONSE =================
+    res.status(200).json({
       accessToken,
       refreshToken,
       role: user.role,
@@ -204,12 +209,12 @@ exports.googleLogin = async (req, res) => {
       email: user.email,
       companyName: user.companyName || "",
       bio: user.bio || "",
-      isNewUser
+      isNewUser,
     });
 
   } catch (err) {
     console.log("Google login error:", err);
-    res.status(500).json({ message: "Google login error" });
+    res.status(500).json({ message: "Google login failed" });
   }
 };
 
