@@ -282,9 +282,11 @@ exports.forgotPassword = async (req, res) => {
   try {
     const user = await User.findOne({ email: req.body.email });
 
-    if (!user)
+    if (!user) {
       return res.status(404).json({ message: "User not found" });
+    }
 
+    // 🔐 Generate token
     const resetToken = crypto.randomBytes(32).toString("hex");
 
     user.resetToken = crypto
@@ -296,29 +298,54 @@ exports.forgotPassword = async (req, res) => {
 
     await user.save();
 
-    const resetURL = `http://localhost:5173/reset-password/${resetToken}`;
+    // 🔗 Reset URL
+    const resetURL = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
 
+    // 📧 Mail transporter
     const transporter = nodemailer.createTransport({
-      service: "gmail",
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false,
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
       },
+      connectionTimeout: 10000,
     });
 
-    await transporter.sendMail({
-      to: user.email,
-      subject: "Password Reset",
-      html: `<a href="${resetURL}">Reset Password</a>`,
-    });
+    try {
+      await transporter.sendMail({
+        from: process.env.EMAIL_USER,
+        to: user.email,
+        subject: "Password Reset",
+        html: `
+          <h2>Password Reset</h2>
+          <p>Click the button below to reset your password:</p>
+          <a href="${resetURL}" 
+             style="padding:10px 20px; background:#007bff; color:#fff; text-decoration:none; border-radius:5px;">
+             Reset Password
+          </a>
+          <p>This link will expire in 15 minutes.</p>
+        `,
+      });
 
-    res.json({ message: "Reset link sent" });
+      return res.json({ message: "Reset link sent successfully" });
+
+    } catch (emailErr) {
+      console.log("Email error:", emailErr.message);
+
+      // ✅ Don't break user flow
+      return res.json({
+        message: "Reset link generated, but email could not be sent.",
+      });
+    }
 
   } catch (err) {
     console.log(err);
-    res.status(500).json({ message: "Error sending email" });
+    return res.status(500).json({ message: "Forgot password error" });
   }
 };
+
 exports.resetPassword = async (req, res) => {
   try {
     const hashedToken = crypto
