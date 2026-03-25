@@ -1,7 +1,7 @@
 const User = require("../models/User");
 const jwt = require("jsonwebtoken");
-const crypto = require("crypto");
-const nodemailer = require("nodemailer");
+// const crypto = require("crypto");
+
 
 // ================= TOKEN GENERATORS =================
 const generateAccessToken = (id) => {
@@ -26,44 +26,16 @@ exports.register = async (req, res) => {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    const emailToken = crypto.randomBytes(32).toString("hex");
-
-    const user = await User.create({
+    await User.create({
       name,
       email,
       password,
       role: null,
-      emailToken,
+      isVerified: true, // ✅ direct verified
     });
 
-    const verifyURL = `${process.env.FRONTEND_URL}/verify/${emailToken}`;
-
-    const transporter = nodemailer.createTransport({
-      host: "smtp.sendgrid.net",
-      port: 587,
-      auth: {
-        user: "apikey",
-        pass: process.env.SENDGRID_API_KEY,
-      },
-    });
-
-    // ✅ RESPONSE FIRST (IMPORTANT)
-    res.status(201).json({
+    return res.status(201).json({
       message: "Registered successfully",
-    });
-
-    // ✅ EMAIL BACKGROUND (NO AWAIT)
-    transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: "Verify Your Email",
-      html: `
-        <h2>Email Verification</h2>
-        <p>Click below:</p>
-        <a href="${verifyURL}">${verifyURL}</a>
-      `,
-    }).catch(err => {
-      console.log("Email failed:", err.message);
     });
 
   } catch (err) {
@@ -109,25 +81,7 @@ exports.setRole = async (req, res) => {
 };
 
 // ================= VERIFY EMAIL =================
-exports.verifyEmail = async (req, res) => {
-  try {
-    const user = await User.findOne({ emailToken: req.params.token });
 
-    if (!user) {
-      return res.json({ message: "Email already verified" });
-    }
-
-    user.isVerified = true;
-    user.emailToken = undefined;
-
-    await user.save();
-
-    res.json({ message: "Email verified successfully" });
-
-  } catch (err) {
-    res.status(500).json({ message: "Verification error" });
-  }
-};
 
 // ================= LOGIN =================
 exports.login = async (req, res) => {

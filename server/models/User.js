@@ -94,7 +94,7 @@ const userSchema = mongoose.Schema(
   // ================= AUTH =================
   isVerified: {
     type: Boolean,
-    default: false,
+    default: true,
   },
 
   emailToken: {
