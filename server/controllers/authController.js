@@ -39,34 +39,31 @@ exports.register = async (req, res) => {
     const verifyURL = `${process.env.FRONTEND_URL}/verify/${emailToken}`;
 
     const transporter = nodemailer.createTransport({
-  host: "smtp.sendgrid.net",
-  port: 587,
-  auth: {
-    user: "apikey",
-    pass: process.env.SENDGRID_API_KEY,
-  },
-});
+      host: "smtp.sendgrid.net",
+      port: 587,
+      auth: {
+        user: "apikey",
+        pass: process.env.SENDGRID_API_KEY,
+      },
+    });
 
-    // ✅ EMAIL SAFE BLOCK
-    try {
-      await transporter.sendMail({
-        from: process.env.EMAIL_USER,
-        to: email,
-        subject: "Verify Your Email",
-        html: `
-          <h2>Email Verification</h2>
-          <p>Click below:</p>
-          <a href="${verifyURL}">${verifyURL}</a>
-        `,
-      });
-    } catch (emailErr) {
-      console.log("Email failed:", emailErr.message);
-      // ❗ DON'T THROW ERROR
-    }
-
-    // ✅ ALWAYS SUCCESS
-    return res.status(201).json({
+    // ✅ RESPONSE FIRST (IMPORTANT)
+    res.status(201).json({
       message: "Registered successfully",
+    });
+
+    // ✅ EMAIL BACKGROUND (NO AWAIT)
+    transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: "Verify Your Email",
+      html: `
+        <h2>Email Verification</h2>
+        <p>Click below:</p>
+        <a href="${verifyURL}">${verifyURL}</a>
+      `,
+    }).catch(err => {
+      console.log("Email failed:", err.message);
     });
 
   } catch (err) {
