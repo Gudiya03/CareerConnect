@@ -1,6 +1,7 @@
 const User = require("../models/User");
 const jwt = require("jsonwebtoken");
-// const crypto = require("crypto");
+const crypto = require("crypto");
+const nodemailer = require("nodemailer");
 
 
 // ================= TOKEN GENERATORS =================
@@ -81,6 +82,23 @@ exports.setRole = async (req, res) => {
 };
 
 // ================= VERIFY EMAIL =================
+exports.verifyEmail = async (req, res) => {
+  try {
+    const user = await User.findOne({ emailToken: req.params.token });
+
+    if (!user) {
+      return res.status(400).json({ message: "Verification token invalid or expired" });
+    }
+
+    user.isVerified = true;
+    user.emailToken = undefined;
+    await user.save();
+
+    res.json({ message: "Email verified successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Email verification error" });
+  }
+};
 
 
 // ================= LOGIN =================
@@ -264,14 +282,13 @@ exports.forgotPassword = async (req, res) => {
     const resetURL = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
 
     // 📧 Mail transporter
-  const transporter = nodemailer.createTransport({
-  host: "smtp.sendgrid.net",
-  port: 587,
-  auth: {
-    user: "apikey",
-    pass: process.env.SENDGRID_API_KEY,
-  },
-});
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
 
     try {
       await transporter.sendMail({

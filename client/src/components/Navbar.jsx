@@ -54,7 +54,11 @@ const Navbar = () => {
 
   const navLinks =
     role === "candidate"
-      ? [{ label: "Jobs", to: "/jobs" }, { label: "Applications", to: "/my-applications" }]
+      ? [
+          { label: "Jobs", to: "/jobs" },
+          { label: "Saved Jobs", to: "/saved-jobs" },
+          { label: "Applications", to: "/my-applications" }
+        ]
       : role === "employer"
       ? [{ label: "Dashboard", to: "/employer" }]
       : [];
@@ -67,7 +71,7 @@ const Navbar = () => {
 
           {/* LOGO */}
           <button
-            onClick={() => navigate("/jobs")}
+            onClick={() => navigate("/")}
             className="text-[19px] sm:text-[20px] font-bold tracking-tight bg-gradient-to-r from-indigo-500 to-indigo-400 bg-clip-text text-transparent hover:opacity-80 transition-opacity select-none flex-shrink-0"
             style={{ fontFamily: "'Bricolage Grotesque', sans-serif" }}
           >

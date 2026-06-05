@@ -1,29 +1,73 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { API } from "../api/api";
+import toast, { Toaster } from "react-hot-toast";
 
 const JobDetails = () => {
   const { id } = useParams();
   const [job, setJob] = useState(null);
   const [applied, setApplied] = useState(false);
   const [resume, setResume] = useState(null);
+  const [userSkills, setUserSkills] = useState([]);
+  const [saved, setSaved] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState("");
 
   useEffect(() => {
-    fetchJob();
+    fetchData();
   }, []);
 
-  const fetchJob = async () => {
+  const fetchData = async () => {
     try {
       const res = await API.get(`/jobs/${id}`);
       setJob(res.data);
+
+      try {
+        const profileRes = await API.get("/auth/profile");
+        setUserSkills(profileRes.data.skills || []);
+        const uid = profileRes.data._id;
+        setCurrentUserId(uid);
+        setSaved(res.data.savedBy && res.data.savedBy.includes(uid));
+      } catch (err) {
+        console.log("No profile fetched");
+      }
+
+      try {
+        const appsRes = await API.get("/applications/my");
+        const hasApplied = appsRes.data.some((app) => app.job?._id === id);
+        setApplied(hasApplied);
+      } catch (err) {
+        console.log("No applications fetched");
+      }
     } catch {
-      alert("Failed to load job");
+      toast.error("Failed to load job details");
     }
+  };
+
+  const toggleSave = async () => {
+    try {
+      const res = await API.post(`/jobs/save/${id}`);
+      setSaved(res.data.saved);
+      if (res.data.saved) {
+        toast.success("Job saved successfully!");
+      } else {
+        toast.success("Job removed from saved!");
+      }
+    } catch {
+      toast.error("Failed to update saved status");
+    }
+  };
+
+  const getMatch = (jobSkills = []) => {
+    if (!jobSkills.length || !userSkills.length) return 0;
+    const matched = jobSkills.filter(skill =>
+      userSkills.map(s => s.toLowerCase()).includes(skill.toLowerCase())
+    );
+    return Math.round((matched.length / jobSkills.length) * 100);
   };
 
   const applyJob = async () => {
     if (!resume) {
-      alert("Please upload your resume first");
+      toast.error("Please upload your resume first");
       return;
     }
     try {
@@ -33,8 +77,9 @@ const JobDetails = () => {
         headers: { "Content-Type": "multipart/form-data" },
       });
       setApplied(true);
+      toast.success("Applied successfully!");
     } catch (err) {
-      alert(err.response?.data?.message || "Apply failed");
+      toast.error(err.response?.data?.message || "Apply failed");
     }
   };
 
@@ -54,20 +99,36 @@ const JobDetails = () => {
 
   return (
     <div className="w-full min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-white">
+      <Toaster position="top-right" />
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-6">
 
         {/* Job Header Card */}
         <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-6 sm:p-8">
 
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-1">
-            {job.title}
-          </h1>
-          <p className="text-indigo-500 dark:text-indigo-400 font-semibold text-sm mb-5">
-            {job.company}
-          </p>
+          <div className="flex justify-between items-start gap-4 mb-2">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white mb-1">
+                {job.title}
+              </h1>
+              <p className="text-indigo-500 dark:text-indigo-400 font-semibold text-sm">
+                {job.company}
+              </p>
+            </div>
+            <button
+              onClick={toggleSave}
+              className={`w-10 h-10 rounded-xl flex items-center justify-center text-base border transition hover:scale-105 active:scale-95 flex-shrink-0
+                ${saved 
+                  ? "bg-rose-50 border-rose-100 dark:bg-rose-950/20 dark:border-rose-900/30 text-rose-500" 
+                  : "bg-gray-50 border-gray-100 dark:bg-slate-800 dark:border-slate-700 text-gray-400"
+                }`}
+              title={saved ? "Remove from Saved" : "Save Job"}
+            >
+              {saved ? "❤️" : "🤍"}
+            </button>
+          </div>
 
           {/* Meta badges */}
-          <div className="flex flex-wrap gap-2 mb-7">
+          <div className="flex flex-wrap gap-2 mb-6 mt-4">
             {job.location && (
               <span className="inline-flex items-center gap-1.5 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-xs font-medium px-3 py-1.5 rounded-lg">
                 📍 {job.location}
@@ -89,6 +150,47 @@ const JobDetails = () => {
               </span>
             )}
           </div>
+
+          {/* Divider */}
+          <div className="border-t border-gray-100 dark:border-gray-800 mb-6" />
+
+          {/* Job Description */}
+          {job.description && (
+            <div className="mb-6 space-y-2">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                Job Description
+              </h3>
+              <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed whitespace-pre-line">
+                {job.description}
+              </p>
+            </div>
+          )}
+
+          {/* Required Skills */}
+          {job.skills && job.skills.length > 0 && (
+            <div className="mb-6 space-y-2">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                Required Skills
+              </h3>
+              <div className="flex flex-wrap gap-2 pt-1">
+                {job.skills.map((skill, index) => {
+                  const hasSkill = userSkills.map(s => s.toLowerCase()).includes(skill.toLowerCase());
+                  return (
+                    <span
+                      key={index}
+                      className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border
+                        ${hasSkill
+                          ? "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-900/30 text-emerald-600 dark:text-emerald-400"
+                          : "bg-gray-50 dark:bg-gray-800/40 border-gray-100 dark:border-gray-800 text-gray-500 dark:text-gray-400"
+                        }`}
+                    >
+                      {skill} {hasSkill ? "✓" : ""}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Divider */}
           <div className="border-t border-gray-100 dark:border-gray-800 mb-6" />
@@ -143,11 +245,12 @@ const JobDetails = () => {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
           {[
             { label: "Applicants", value: job.applicantsCount || 0, color: "text-indigo-500 dark:text-indigo-400", bg: "bg-indigo-50 dark:bg-indigo-950/40" },
             { label: "Accepted", value: job.acceptedCount || 0, color: "text-emerald-500 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-950/40" },
             { label: "Pending", value: job.pendingCount || 0, color: "text-amber-500 dark:text-amber-400", bg: "bg-amber-50 dark:bg-amber-950/40" },
+            { label: "Skills Match", value: `${getMatch(job.skills)}%`, color: "text-violet-500 dark:text-violet-400", bg: "bg-violet-50 dark:bg-violet-950/40" },
           ].map((stat) => (
             <div key={stat.label} className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 shadow-sm">
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 mb-3">{stat.label}</p>

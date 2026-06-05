@@ -20,6 +20,8 @@ import EmployerSetup from "./pages/EmployerSetup";
 import CandidateSetup from "./pages/CandidateSetup";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import Home from "./pages/Home"; // ⭐ NEW LANDING PAGE
+import SavedJobs from "./pages/SavedJobs"; // ⭐ NEW SAVED JOBS PAGE
 
 function Layout() {
   const location = useLocation();
@@ -38,11 +40,12 @@ function Layout() {
 
         <Routes>
 
-          <Route path="/" element={<Login />} />
+          <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
           <Route path="/jobs" element={<Jobs />} />
+          <Route path="/saved-jobs" element={<SavedJobs />} />
           <Route path="/select-role" element={<SelectRole />} />
           <Route path="/employer-setup" element={<EmployerSetup />} />
           <Route path="/candidate-setup" element={<CandidateSetup />} />

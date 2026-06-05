@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { API } from "../api/api";
 import { Link } from "react-router-dom";
+import toast, { Toaster } from "react-hot-toast";
 
 const Jobs = () => {
 
@@ -11,57 +12,63 @@ const Jobs = () => {
   // ⭐ NEW STATES
   const [savedJobs, setSavedJobs] = useState([]);
   const [userSkills, setUserSkills] = useState([]);
+  const [currentUserId, setCurrentUserId] = useState("");
 
   const [showModal, setShowModal] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
   const [resume, setResume] = useState(null);
 
   useEffect(() => {
-    fetchJobs();
-    fetchMyApplications();
-    fetchProfile(); // ⭐ new
+    fetchData();
   }, []);
 
-  const fetchJobs = async () => {
+  const fetchData = async () => {
     try {
-      const res = await API.get("/jobs");
-      setJobs(res.data);
-    } catch {
-      console.log("Error loading jobs");
-    }
-  };
+      const profileRes = await API.get("/auth/profile");
+      const uid = profileRes.data._id;
+      setCurrentUserId(uid);
+      setUserSkills(profileRes.data.skills || []);
 
-  const fetchMyApplications = async () => {
+      const jobsRes = await API.get("/jobs");
+      setJobs(jobsRes.data);
+
+      const saved = jobsRes.data
+        .filter((job) => job.savedBy && job.savedBy.includes(uid))
+        .map((job) => job._id);
+      setSavedJobs(saved);
+    } catch (err) {
+      console.log("Error loading user profile or jobs");
+    }
+
     try {
-      const res = await API.get("/applications/my");
-      const jobIds = res.data.map((app) => app.job?._id);
+      const appsRes = await API.get("/applications/my");
+      const jobIds = appsRes.data.map((app) => app.job?._id);
       setAppliedJobs(jobIds);
     } catch {}
   };
 
-  // ⭐ FETCH PROFILE FOR MATCH %
-  const fetchProfile = async () => {
+  // ⭐ SAVE JOB TO SERVER
+  const toggleSave = async (id) => {
     try {
-      const res = await API.get("/auth/profile");
-      setUserSkills(res.data.skills || []);
-    } catch {}
-  };
-
-  // ⭐ SAVE JOB
-  const toggleSave = (id) => {
-    if (savedJobs.includes(id)) {
-      setSavedJobs(savedJobs.filter(j => j !== id));
-    } else {
-      setSavedJobs([...savedJobs, id]);
+      const res = await API.post(`/jobs/save/${id}`);
+      if (res.data.saved) {
+        setSavedJobs([...savedJobs, id]);
+        toast.success("Job saved successfully!");
+      } else {
+        setSavedJobs(savedJobs.filter(j => j !== id));
+        toast.success("Job removed from saved!");
+      }
+    } catch {
+      toast.error("Failed to update saved status");
     }
   };
 
-  // ⭐ MATCH %
+  // ⭐ MATCH % (CASE-INSENSITIVE)
   const getMatch = (jobSkills = []) => {
     if (!jobSkills.length || !userSkills.length) return 0;
 
     const matched = jobSkills.filter(skill =>
-      userSkills.includes(skill)
+      userSkills.map(s => s.toLowerCase()).includes(skill.toLowerCase())
     );
 
     return Math.round((matched.length / jobSkills.length) * 100);
@@ -74,7 +81,7 @@ const Jobs = () => {
 
   const applyJob = async () => {
     if (!resume) {
-      alert("Please upload your resume");
+      toast.error("Please upload your resume");
       return;
     }
 
@@ -91,9 +98,10 @@ const Jobs = () => {
       setAppliedJobs([...appliedJobs, selectedJob]);
       setShowModal(false);
       setResume(null);
+      toast.success("Applied successfully!");
 
     } catch (err) {
-      alert(err.response?.data?.message || "Apply error");
+      toast.error(err.response?.data?.message || "Apply error");
     }
   };
 
@@ -119,6 +127,7 @@ const Jobs = () => {
   return (
 
     <div className="w-full min-h-screen bg-gray-50 dark:bg-[#020617] text-gray-900 dark:text-white">
+      <Toaster position="top-right" />
 
       <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-12">
 
