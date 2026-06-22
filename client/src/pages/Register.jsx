@@ -1,187 +1,81 @@
-import { useState } from "react";
-import { API } from "../api/api";
-import { useNavigate, Link } from "react-router-dom";
-import { GoogleLogin } from "@react-oauth/google";
-import { jwtDecode } from "jwt-decode";
+import { Link } from "react-router-dom";
 
 const Register = () => {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-
-  const navigate = useNavigate();
-const submit = async () => {
-  if (password !== confirmPassword) {
-    alert("Passwords do not match");
-    return;
-  }
-
-  try {
-    setLoading(true);
-
-    const res = await API.post("/auth/register", {
-      name,
-      email,
-      password,
-    });
-
-    console.log("REGISTER RESPONSE:", res);
-
-    // ✅ ALWAYS SUCCESS IF REQUEST DIDN'T THROW
-    alert(res.data?.message || "Registration successful 🎉");
-
-    localStorage.setItem("tempName", name);
-    localStorage.setItem("tempEmail", email);
-
-    navigate("/select-role");
-
-  } catch (err) {
-    console.log("REGISTER ERROR:", err);
-
-    // ✅ PROPER ERROR HANDLING
-    if (err.response) {
-      alert(err.response.data?.message || "Register failed");
-    } else {
-      alert("Network error / Server down");
-    }
-
-  } finally {
-    setLoading(false);
-  }
-};
-
-  const handleGoogleRegister = async (credentialResponse) => {
-    const decoded = jwtDecode(credentialResponse.credential);
-    localStorage.setItem("tempGoogleName", decoded.name);
-    localStorage.setItem("tempGoogleEmail", decoded.email);
-    localStorage.setItem("tempGoogleId", decoded.sub);
-    navigate("/select-role");
-  };
-
-  const inputClass =
-    "w-full px-4 py-3 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all";
+  const options = [
+    {
+      to: "/register-candidate",
+      title: "Register as Candidate",
+      description: "Discover tech opportunities, complete coding assessments, build your profile, and apply with ease.",
+      icon: (
+        <svg className="w-8 h-8 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        </svg>
+      ),
+      borderColor: "hover:border-blue-500/40",
+      btnColor: "bg-blue-600 hover:bg-blue-500 hover:shadow-blue-500/20",
+    },
+    {
+      to: "/register-recruiter",
+      title: "Register as Recruiter",
+      description: "Post vacancies, track applicant profiles, schedule virtual interviews, and manage premium pipeline plans.",
+      icon: (
+        <svg className="w-8 h-8 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+        </svg>
+      ),
+      borderColor: "hover:border-emerald-500/40",
+      btnColor: "bg-emerald-600 hover:bg-emerald-500 hover:shadow-emerald-500/20",
+    },
+  ];
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-violet-50 dark:from-gray-950 dark:via-gray-900 dark:to-indigo-950 px-4 py-10">
-
+    <div className="min-h-screen bg-[#080b14] flex flex-col justify-center items-center px-4 relative overflow-hidden">
       {/* Background blobs */}
-      <div className="pointer-events-none fixed inset-0 overflow-hidden -z-10">
-        <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-indigo-300/20 blur-3xl" />
-        <div className="absolute -bottom-32 -right-32 w-96 h-96 rounded-full bg-violet-300/20 blur-3xl" />
-      </div>
+      <div className="absolute top-[-100px] left-[-100px] w-[500px] h-[500px] bg-indigo-600/10 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute bottom-[-100px] right-[-100px] w-[450px] h-[450px] bg-emerald-600/5 rounded-full blur-[100px] pointer-events-none" />
 
-      <div className="w-full max-w-md">
-        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl shadow-indigo-100/50 dark:shadow-indigo-950/50 border border-gray-100 dark:border-gray-800 overflow-hidden">
-
-          {/* Header */}
-          <div className="bg-gradient-to-r from-indigo-500 to-violet-500 px-8 py-6">
-            <h2 className="text-xl font-bold text-white">Create Account</h2>
-            <p className="text-indigo-100 text-xs mt-0.5">Join thousands of candidates and employers</p>
+      <div className="relative w-full max-w-2xl text-center space-y-8 z-10">
+        <div className="space-y-2">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-white/5 border border-white/10 mb-2">
+            <svg className="w-6 h-6 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+            </svg>
           </div>
-
-          {/* Form */}
-          <div className="px-8 py-7 space-y-4">
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Full Name</label>
-              <input
-                placeholder="John Doe"
-                className={inputClass}
-                onChange={(e) => setName(e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Email</label>
-              <input
-                type="email"
-                placeholder="you@example.com"
-                className={inputClass}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Password</label>
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Min. 8 characters"
-                  className={`${inputClass} pr-11`}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-                >
-                  {showPassword ? (
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
-                      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
-                      <line x1="1" y1="1" x2="23" y2="23" />
-                    </svg>
-                  ) : (
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                      <circle cx="12" cy="12" r="3" />
-                    </svg>
-                  )}
-                </button>
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Confirm Password</label>
-              <input
-                type="password"
-                placeholder="Re-enter password"
-                className={inputClass}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-              />
-            </div>
-
-            <button
-              onClick={submit}
-              disabled={loading}
-              className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-500 to-violet-500 hover:from-indigo-600 hover:to-violet-600 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl shadow-lg shadow-indigo-200 dark:shadow-indigo-950/50 transition-all duration-150 active:scale-[0.98] text-sm mt-1"
-            >
-              {loading ? (
-                <>
-                  <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                  </svg>
-                  Creating account…
-                </>
-              ) : "Register"}
-            </button>
-
-            <div className="flex items-center gap-3 py-1">
-              <div className="flex-1 h-px bg-gray-100 dark:bg-gray-800" />
-              <span className="text-xs text-gray-400 font-medium">OR</span>
-              <div className="flex-1 h-px bg-gray-100 dark:bg-gray-800" />
-            </div>
-
-            <div className="flex justify-center">
-              <GoogleLogin
-                onSuccess={handleGoogleRegister}
-                onError={() => alert("Google failed")}
-              />
-            </div>
-
-            <p className="text-center text-sm text-gray-500 dark:text-gray-400 pt-1">
-              Already have an account?{" "}
-              <Link to="/login" className="text-indigo-500 dark:text-indigo-400 font-semibold hover:underline">
-                Login
-              </Link>
-            </p>
-
-          </div>
+          <h1 className="text-3xl font-extrabold text-white tracking-tight">Join CareerConnect</h1>
+          <p className="text-white/40 text-xs">Choose the option that aligns with your goals to get started</p>
         </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-left">
+          {options.map((opt, i) => (
+            <div
+              key={i}
+              className={`bg-white/[0.02] backdrop-blur-xl border border-white/5 rounded-3xl p-6 flex flex-col justify-between hover:bg-white/[0.04] transition-all duration-300 group cursor-pointer border-transparent ${opt.borderColor}`}
+            >
+              <div className="space-y-4">
+                <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10">
+                  {opt.icon}
+                </div>
+                <div className="space-y-1">
+                  <h3 className="text-base font-bold text-white group-hover:text-indigo-400 transition-colors">{opt.title}</h3>
+                  <p className="text-white/40 text-xs leading-relaxed">{opt.description}</p>
+                </div>
+              </div>
+
+              <Link to={opt.to} className="block mt-6">
+                <button className={`w-full py-3 rounded-xl text-white font-semibold text-xs transition duration-200 shadow-md ${opt.btnColor} cursor-pointer`}>
+                  Get Started
+                </button>
+              </Link>
+            </div>
+          ))}
+        </div>
+
+        <p className="text-xs text-white/30">
+          Already have an account?{" "}
+          <Link to="/login" className="text-indigo-400 hover:text-indigo-300 font-bold transition">
+            Sign In
+          </Link>
+        </p>
       </div>
     </div>
   );

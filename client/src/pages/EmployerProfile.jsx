@@ -30,14 +30,21 @@ const EmployerProfile = () => {
     try {
       await API.put("/auth/profile", profile);
       toast.success("Profile updated");
+      if (profile.name) {
+        localStorage.setItem("name", profile.name);
+      }
+      if (profile.companyName) {
+        localStorage.setItem("companyName", profile.companyName);
+      }
       setEditMode(false);
       fetchProfile();
+      window.location.reload();
     } catch {
       toast.error("Update failed");
     }
   };
 
-  const initials = profile.companyName?.trim()?.charAt(0)?.toUpperCase() || "C";
+  const initials = (profile.companyName || profile.name || "C").trim().charAt(0).toUpperCase();
 
   /* Info row used in view mode */
   const InfoRow = ({ label, value }) => (
@@ -90,6 +97,7 @@ const EmployerProfile = () => {
 
             {/* Details */}
             <div className="px-5 sm:px-6 py-1">
+              <InfoRow label="Recruiter Name" value={profile.name} />
               <InfoRow label="Website" value={profile.companyWebsite} />
               <InfoRow label="Location" value={profile.location} />
               <InfoRow label="Industry" value={profile.industry} />
@@ -113,6 +121,12 @@ const EmployerProfile = () => {
             <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-4">Edit Company Information</h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <input
+                placeholder="Recruiter Name"
+                value={profile.name || ""}
+                onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                className={inp}
+              />
               <input
                 placeholder="Company Name"
                 value={profile.companyName}

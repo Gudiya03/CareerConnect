@@ -2,6 +2,8 @@ const User = require("../models/User");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const nodemailer = require("nodemailer");
+const SystemSetting = require("../models/SystemSetting");
+
 
 
 // ================= TOKEN GENERATORS =================
@@ -20,28 +22,67 @@ const generateRefreshToken = (id) => {
 // ================= REGISTER =================
 exports.register = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, role } = req.body;
 
     const existing = await User.findOne({ email });
     if (existing) {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    await User.create({
+    const userData = {
       name,
       email,
       password,
-      role: null,
-      isVerified: true, // ✅ direct verified
-    });
+      role: role || "candidate",
+      isVerified: true,
+      
+      // Candidate details
+      phone: req.body.phone,
+      bio: req.body.bio,
+      location: req.body.location,
+      skills: req.body.skills,
+      certifications: req.body.certifications,
+      languages: req.body.languages,
+      socialLinks: req.body.socialLinks,
+      preferences: req.body.preferences,
+      education: req.body.education,
+      experience: req.body.experience,
+      profileImage: req.body.profileImage,
+
+      // Employer details
+      companyName: req.body.companyName,
+      companyLogo: req.body.companyLogo,
+      companyWebsite: req.body.companyWebsite,
+      industry: req.body.industry,
+      companySize: req.body.companySize,
+      companyDescription: req.body.companyDescription,
+      recruiterPhone: req.body.recruiterPhone,
+      designation: req.body.designation,
+      businessRegNo: req.body.businessRegNo,
+      companyAddress: req.body.companyAddress,
+    };
+
+    const user = await User.create(userData);
+
+    const accessToken = generateAccessToken(user._id);
+    const refreshToken = generateRefreshToken(user._id);
+
+    user.refreshToken = refreshToken;
+    await user.save();
 
     return res.status(201).json({
       message: "Registered successfully",
+      accessToken,
+      refreshToken,
+      role: user.role,
+      name: user.name,
+      email: user.email,
+      companyName: user.companyName || "",
+      bio: user.bio || "",
     });
 
   } catch (err) {
     console.log("Register error:", err);
-
     return res.status(500).json({
       message: "Something went wrong",
     });
@@ -106,6 +147,28 @@ exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    // Seed fixed admin account if matched
+    if (email === "admin@careerconnect.com" && password === "admin123") {
+      let adminUser = await User.findOne({ email: "admin@careerconnect.com" });
+      if (adminUser) {
+        const isMatch = await adminUser.matchPassword("admin123").catch(() => false);
+        if (!isMatch) {
+          await User.deleteOne({ _id: adminUser._id });
+          adminUser = null;
+        }
+      }
+      if (!adminUser) {
+        await User.create({
+          name: "System Admin",
+          email: "admin@careerconnect.com",
+          password: "admin123",
+          role: "admin",
+          isVerified: true,
+          isVerifiedRecruiter: true
+        });
+      }
+    }
+
     const user = await User.findOne({ email });
 
     if (!user)
@@ -135,7 +198,8 @@ exports.login = async (req, res) => {
     });
 
   } catch (err) {
-    res.status(500).json({ message: "Login error" });
+    console.error("LOGIN ERROR DETECTED:", err);
+    res.status(500).json({ message: "Login error", error: err.message });
   }
 };
 
@@ -213,25 +277,40 @@ exports.getProfile = async (req, res) => {
 // ================= UPDATE PROFILE =================
 exports.updateProfile = async (req, res) => {
   try {
-
     const user = await User.findById(req.user._id);
 
     // COMMON
-    user.bio = req.body.bio || user.bio;
-    user.location = req.body.location || user.location;
-    user.skills = req.body.skills || user.skills;
-    user.education = req.body.education || user.education;
-    user.experience = req.body.experience || user.experience;
-    user.socialLinks = req.body.socialLinks || user.socialLinks;
+    user.bio = req.body.bio !== undefined ? req.body.bio : user.bio;
+    user.location = req.body.location !== undefined ? req.body.location : user.location;
+    user.skills = req.body.skills !== undefined ? req.body.skills : user.skills;
+    user.education = req.body.education !== undefined ? req.body.education : user.education;
+    user.experience = req.body.experience !== undefined ? req.body.experience : user.experience;
+    user.socialLinks = req.body.socialLinks !== undefined ? req.body.socialLinks : user.socialLinks;
+
+    // CANDIDATE
+    user.phone = req.body.phone !== undefined ? req.body.phone : user.phone;
+    user.certifications = req.body.certifications !== undefined ? req.body.certifications : user.certifications;
+    user.languages = req.body.languages !== undefined ? req.body.languages : user.languages;
+    user.preferences = req.body.preferences !== undefined ? req.body.preferences : user.preferences;
+    user.profileImage = req.body.profileImage !== undefined ? req.body.profileImage : user.profileImage;
 
     // EMPLOYER
-    user.companyName = req.body.companyName || user.companyName;
-    user.companyWebsite = req.body.companyWebsite || user.companyWebsite;
-    user.industry = req.body.industry || user.industry;
+    user.companyName = req.body.companyName !== undefined ? req.body.companyName : user.companyName;
+    user.companyWebsite = req.body.companyWebsite !== undefined ? req.body.companyWebsite : user.companyWebsite;
+    user.industry = req.body.industry !== undefined ? req.body.industry : user.industry;
+    user.companyLogo = req.body.companyLogo !== undefined ? req.body.companyLogo : user.companyLogo;
+    user.companySize = req.body.companySize !== undefined ? req.body.companySize : user.companySize;
+    user.companyDescription = req.body.companyDescription !== undefined ? req.body.companyDescription : user.companyDescription;
+    user.recruiterPhone = req.body.recruiterPhone !== undefined ? req.body.recruiterPhone : user.recruiterPhone;
+    user.designation = req.body.designation !== undefined ? req.body.designation : user.designation;
+    user.businessRegNo = req.body.businessRegNo !== undefined ? req.body.businessRegNo : user.businessRegNo;
+    user.companyAddress = req.body.companyAddress !== undefined ? req.body.companyAddress : user.companyAddress;
+    user.subscriptionPlan = req.body.subscriptionPlan !== undefined ? req.body.subscriptionPlan : user.subscriptionPlan;
+    user.subscriptionStatus = req.body.subscriptionStatus !== undefined ? req.body.subscriptionStatus : user.subscriptionStatus;
 
     await user.save();
 
-    res.json({ message: "Profile updated successfully" });
+    res.json({ message: "Profile updated successfully", user });
 
   } catch (err) {
     console.log(err);
@@ -242,6 +321,16 @@ exports.updateProfile = async (req, res) => {
 // ================= UPLOAD RESUME =================
 exports.uploadResume = async (req, res) => {
   try {
+    let settings = await SystemSetting.findOne();
+    if (!settings) {
+      settings = await SystemSetting.create({});
+    }
+
+    if (!settings.allowCandidateResumeUpload) {
+      return res.status(403).json({
+        message: "Resume uploads are currently disabled by the system administrator."
+      });
+    }
 
     if (!req.file)
       return res.status(400).json({ message: "No file uploaded" });
@@ -380,5 +469,16 @@ exports.refreshToken = async (req, res) => {
 
   } catch (err) {
     res.status(403).json({ message: "Token expired or invalid" });
+  }
+};
+
+// ================= GET CANDIDATES =================
+exports.getCandidates = async (req, res) => {
+  try {
+    const candidates = await User.find({ role: "candidate" })
+      .select("-password -refreshToken");
+    res.json(candidates);
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching candidates" });
   }
 };

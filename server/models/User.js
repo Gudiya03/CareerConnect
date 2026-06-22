@@ -47,6 +47,10 @@ const userSchema = mongoose.Schema(
     type: String,
   },
 
+  phone: {
+    type: String,
+  },
+
   skills: [
     {
       type: String,
@@ -72,14 +76,41 @@ const userSchema = mongoose.Schema(
     }
   ],
 
+  certifications: [
+    {
+      type: String,
+    }
+  ],
+
+  languages: [
+    {
+      type: String,
+    }
+  ],
+
   socialLinks: {
     linkedin: String,
     github: String,
     portfolio: String,
   },
 
+  preferences: {
+    preferredRole: String,
+    preferredLocation: String,
+    expectedSalary: String,
+    workType: {
+      type: String,
+      enum: ["Remote", "Hybrid", "Onsite", ""],
+      default: "",
+    }
+  },
+
   // ================= EMPLOYER PROFILE =================
   companyName: {
+    type: String,
+  },
+
+  companyLogo: {
     type: String,
   },
 
@@ -91,10 +122,55 @@ const userSchema = mongoose.Schema(
     type: String,
   },
 
+  companySize: {
+    type: String,
+  },
+
+  companyDescription: {
+    type: String,
+  },
+
+  recruiterPhone: {
+    type: String,
+  },
+
+  designation: {
+    type: String,
+  },
+
+  businessRegNo: {
+    type: String,
+  },
+
+  companyAddress: {
+    type: String,
+  },
+
+  subscriptionPlan: {
+    type: String,
+    enum: ["free", "premium"],
+    default: "free"
+  },
+
+  subscriptionStatus: {
+    type: String,
+    default: "none"
+  },
+
   // ================= AUTH =================
   isVerified: {
     type: Boolean,
     default: true,
+  },
+
+  isVerifiedRecruiter: {
+    type: Boolean,
+    default: false,
+  },
+
+  isBlocked: {
+    type: Boolean,
+    default: false,
   },
 
   emailToken: {

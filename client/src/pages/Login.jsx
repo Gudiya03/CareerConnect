@@ -3,51 +3,69 @@ import { API } from "../api/api";
 import { useNavigate, Link } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 import { jwtDecode } from "jwt-decode";
+import toast, { Toaster } from "react-hot-toast";
 
-const inp =
+const inputClass =
   "w-full px-4 py-3 rounded-xl text-sm bg-white/5 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/60 transition-all duration-200 backdrop-blur-sm";
 
 const Login = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  // Candidate Form States
+  const [candidateEmail, setCandidateEmail] = useState("");
+  const [candidatePassword, setCandidatePassword] = useState("");
+  const [candidateRemember, setCandidateRemember] = useState(false);
+  const [candidateLoading, setCandidateLoading] = useState(false);
+
+  // Recruiter Form States
+  const [recruiterEmail, setRecruiterEmail] = useState("");
+  const [recruiterPassword, setRecruiterPassword] = useState("");
+  const [recruiterRemember, setRecruiterRemember] = useState(false);
+  const [recruiterLoading, setRecruiterLoading] = useState(false);
+
   const navigate = useNavigate();
 
-  // ✅ NORMAL LOGIN
-  const submit = async () => {
+  const handleLogin = async (role, email, password, setLoading) => {
     if (!email || !password) {
-      alert("Please fill all fields");
+      toast.error("Please enter email and password");
       return;
     }
 
     setLoading(true);
 
     try {
-      console.log("Sending:", { email, password });
+      const res = await API.post("/auth/login", { email, password });
 
-      const res = await API.post("/auth/login", {
-        email,
-        password,
-      });
-
-      console.log("Response:", res.data);
+      // Validate role
+      if (res.data.role && res.data.role !== role && res.data.role !== "admin") {
+        toast.error(`This account is registered as a ${res.data.role}. Please use the correct login section.`);
+        setLoading(false);
+        return;
+      }
 
       localStorage.setItem("accessToken", res.data.accessToken);
       localStorage.setItem("refreshToken", res.data.refreshToken);
-      localStorage.setItem("role", res.data.role);
+      localStorage.setItem("role", res.data.role || role);
+      localStorage.setItem("name", res.data.name);
+      localStorage.setItem("email", res.data.email);
+      localStorage.setItem("companyName", res.data.companyName || "");
 
-      navigate(res.data.role === "employer" ? "/employer" : "/jobs");
+      toast.success(`Welcome back, ${res.data.name}! 👋`);
+
+      if (res.data.role === "admin") {
+        navigate("/admin");
+      } else if (res.data.role === "employer") {
+        navigate(!res.data.companyName ? "/employer-setup" : "/employer");
+      } else {
+        navigate(!res.data.bio ? "/candidate-setup" : "/candidate-dashboard");
+      }
 
     } catch (err) {
-      console.log("FULL ERROR:", err.response);
-      alert(err.response?.data?.message || "Login failed");
+      toast.error(err.response?.data?.message || "Login failed");
     } finally {
       setLoading(false);
     }
   };
 
-  // ✅ GOOGLE LOGIN
-  const handleGoogleLogin = async (credentialResponse) => {
+  const handleGoogleLogin = async (credentialResponse, role) => {
     try {
       const decoded = jwtDecode(credentialResponse.credential);
 
@@ -55,136 +73,225 @@ const Login = () => {
         name: decoded.name,
         email: decoded.email,
         googleId: decoded.sub,
+        role,
       });
+
+      // Validate role
+      if (res.data.role && res.data.role !== role && res.data.role !== "admin") {
+        toast.error(`This account is registered as a ${res.data.role === "employer" ? "recruiter" : res.data.role}. Please use the correct login section.`);
+        return;
+      }
 
       localStorage.setItem("accessToken", res.data.accessToken);
       localStorage.setItem("refreshToken", res.data.refreshToken);
-      localStorage.setItem("role", res.data.role);
+      localStorage.setItem("role", res.data.role || role);
       localStorage.setItem("name", res.data.name);
       localStorage.setItem("email", res.data.email);
       localStorage.setItem("companyName", res.data.companyName || "");
 
+      toast.success("Login successful 🎉");
+
       if (res.data.isNewUser) {
-        localStorage.setItem("tempGoogleName", decoded.name);
-        localStorage.setItem("tempGoogleEmail", decoded.email);
-        localStorage.setItem("tempGoogleId", decoded.sub);
-        navigate("/select-role");
+        if (role === "employer") {
+          navigate("/employer-setup");
+        } else {
+          navigate("/candidate-setup");
+        }
         return;
       }
 
       if (res.data.role === "employer") {
         navigate(!res.data.companyName ? "/employer-setup" : "/employer");
       } else {
-        navigate(!res.data.bio ? "/candidate-setup" : "/jobs");
+        navigate(!res.data.bio ? "/candidate-setup" : "/candidate-dashboard");
       }
 
     } catch (err) {
       console.error(err);
-      alert("Google login failed");
+      toast.error("Google login failed");
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#080b14] flex items-center justify-center px-4 relative overflow-hidden">
+    <div className="min-h-screen w-full flex flex-col md:flex-row bg-[#080b14] overflow-x-hidden">
+      <Toaster position="top-right" />
 
-      {/* Background ambient blobs */}
-      <div className="absolute top-[-100px] left-[-100px] w-[500px] h-[500px] bg-indigo-600/15 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[-80px] right-[-80px] w-[400px] h-[400px] bg-violet-600/10 rounded-full blur-[100px] pointer-events-none" />
+      {/* ── LEFT SIDE: CANDIDATE LOGIN (BLUE THEME) ── */}
+      <div className="flex-1 min-h-[50vh] md:min-h-screen bg-gradient-to-br from-blue-950 via-[#0a122c] to-indigo-950 flex flex-col justify-center items-center p-8 relative overflow-hidden border-b md:border-b-0 md:border-r border-white/5">
+        {/* Glow Blobs */}
+        <div className="absolute top-[-100px] left-[-100px] w-[350px] h-[350px] bg-blue-600/10 rounded-full blur-[100px] pointer-events-none" />
+        <div className="absolute bottom-[-100px] right-[-100px] w-[300px] h-[300px] bg-indigo-600/10 rounded-full blur-[90px] pointer-events-none" />
 
-      {/* Subtle grid overlay */}
-      <div
-        className="absolute inset-0 opacity-[0.03] pointer-events-none"
-        style={{
-          backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
-                            linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
-          backgroundSize: "40px 40px",
-        }}
-      />
-
-      <div className="relative w-full max-w-md">
-
-        {/* Logo / Brand */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-indigo-500/20 border border-indigo-500/30 mb-4">
-            <svg className="w-6 h-6 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-            </svg>
+        <div className="relative w-full max-w-sm z-10 space-y-6">
+          <div className="text-center">
+            {/* Candidate Illustration */}
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-blue-500/15 border border-blue-500/20 mb-4 text-blue-400">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-bold text-white tracking-tight">Candidate Login</h2>
+            <p className="text-blue-200/40 text-xs mt-1">Sign in to find your dream role</p>
           </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">CareerConnect</h1>
-          <p className="text-white/40 text-sm mt-1">Sign in to your account</p>
-        </div>
 
-        {/* Card */}
-        <div className="bg-white/[0.04] backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl shadow-black/40">
-
-          <div className="space-y-4 mb-6">
+          <div className="bg-white/[0.02] backdrop-blur-xl border border-white/5 rounded-2xl p-6 shadow-xl space-y-4">
             <div>
-              <label className="block text-xs text-white/50 mb-1.5 font-medium tracking-wide uppercase">Email address</label>
+              <label className="block text-[10px] text-blue-300/60 mb-1.5 font-bold uppercase tracking-wider">Email address</label>
               <input
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className={inp}
+                type="email"
+                placeholder="candidate@example.com"
+                value={candidateEmail}
+                onChange={(e) => setCandidateEmail(e.target.value)}
+                className={inputClass}
               />
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-xs text-white/50 font-medium tracking-wide uppercase">Password</label>
-                <Link to="/forgot-password" className="text-xs text-indigo-400 hover:text-indigo-300 cursor-pointer transition">Forgot password?</Link>
+                <label className="block text-[10px] text-blue-300/60 font-bold uppercase tracking-wider">Password</label>
+                <Link to="/forgot-password" className="text-[10px] text-blue-400 hover:text-blue-300 transition">Forgot?</Link>
               </div>
               <input
                 type="password"
                 placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className={inp}
+                value={candidatePassword}
+                onChange={(e) => setCandidatePassword(e.target.value)}
+                className={inputClass}
               />
             </div>
+
+            <div className="flex items-center justify-between py-1 text-xs">
+              <label className="flex items-center gap-2 text-white/50 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={candidateRemember}
+                  onChange={(e) => setCandidateRemember(e.target.checked)}
+                  className="rounded border-white/10 text-blue-600 bg-white/5 focus:ring-0"
+                />
+                Remember Me
+              </label>
+            </div>
+
+            <button
+              onClick={() => handleLogin("candidate", candidateEmail, candidatePassword, setCandidateLoading)}
+              disabled={candidateLoading}
+              className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-60 text-white font-semibold text-sm transition-all duration-200 hover:shadow-[0_0_20px_rgba(37,99,235,0.3)] active:scale-[0.98] cursor-pointer"
+            >
+              {candidateLoading ? "Signing in..." : "Candidate Sign In"}
+            </button>
+
+            <div className="flex items-center gap-3 py-1">
+              <div className="flex-1 h-px bg-white/5" />
+              <span className="text-white/20 text-[10px] font-bold uppercase tracking-widest">or</span>
+              <div className="flex-1 h-px bg-white/5" />
+            </div>
+
+            <div className="flex justify-center">
+              <GoogleLogin
+                onSuccess={(res) => handleGoogleLogin(res, "candidate")}
+                onError={() => toast.error("Google Authentication Failed")}
+              />
+            </div>
+
+            <p className="text-center text-xs text-white/30 mt-4">
+              Don't have an account?{" "}
+              <Link to="/register-candidate" className="text-blue-400 hover:text-blue-300 font-bold transition">
+                Create account
+              </Link>
+            </p>
           </div>
-
-          {/* Sign In Button */}
-          <button
-            onClick={submit}
-            disabled={loading}
-            className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-white font-semibold text-sm transition-all duration-200 hover:shadow-[0_0_24px_rgba(99,102,241,0.4)] active:scale-[0.98]"
-          >
-            {loading ? (
-              <span className="flex items-center justify-center gap-2">
-                <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
-                </svg>
-                Signing in…
-              </span>
-            ) : "Sign In"}
-          </button>
-
-          {/* Divider */}
-          <div className="flex items-center gap-3 my-5">
-            <div className="flex-1 h-px bg-white/10" />
-            <span className="text-white/30 text-xs">or continue with</span>
-            <div className="flex-1 h-px bg-white/10" />
-          </div>
-
-          {/* Google Login */}
-          <div className="flex justify-center">
-            <GoogleLogin
-              onSuccess={handleGoogleLogin}
-              onError={() => alert("Google login failed")}
-            />
-          </div>
-
-          {/* Register link */}
-          <p className="text-center text-sm text-white/40 mt-6">
-            Don't have an account?{" "}
-            <Link to="/register" className="text-indigo-400 hover:text-indigo-300 font-medium transition">
-              Create one
-            </Link>
-          </p>
-
         </div>
       </div>
+
+      {/* ── RIGHT SIDE: RECRUITER LOGIN (GREEN THEME) ── */}
+      <div className="flex-1 min-h-[50vh] md:min-h-screen bg-gradient-to-br from-emerald-950 via-[#061411] to-teal-950 flex flex-col justify-center items-center p-8 relative overflow-hidden">
+        {/* Glow Blobs */}
+        <div className="absolute top-[-100px] left-[-100px] w-[350px] h-[350px] bg-emerald-600/10 rounded-full blur-[100px] pointer-events-none" />
+        <div className="absolute bottom-[-100px] right-[-100px] w-[300px] h-[300px] bg-teal-600/10 rounded-full blur-[90px] pointer-events-none" />
+
+        <div className="relative w-full max-w-sm z-10 space-y-6">
+          <div className="text-center">
+            {/* Recruiter Illustration */}
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-emerald-500/15 border border-emerald-500/20 mb-4 text-emerald-400">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="7" width="20" height="14" rx="2" />
+                <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-bold text-white tracking-tight">Recruiter Login</h2>
+            <p className="text-emerald-200/40 text-xs mt-1">Sign in to publish jobs & hire talent</p>
+          </div>
+
+          <div className="bg-white/[0.02] backdrop-blur-xl border border-white/5 rounded-2xl p-6 shadow-xl space-y-4">
+            <div>
+              <label className="block text-[10px] text-emerald-300/60 mb-1.5 font-bold uppercase tracking-wider">Company Email</label>
+              <input
+                type="email"
+                placeholder="recruiter@company.com"
+                value={recruiterEmail}
+                onChange={(e) => setRecruiterEmail(e.target.value)}
+                className={inputClass}
+              />
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-[10px] text-emerald-300/60 font-bold uppercase tracking-wider">Password</label>
+                <Link to="/forgot-password" className="text-[10px] text-emerald-400 hover:text-emerald-300 transition">Forgot?</Link>
+              </div>
+              <input
+                type="password"
+                placeholder="••••••••"
+                value={recruiterPassword}
+                onChange={(e) => setRecruiterPassword(e.target.value)}
+                className={inputClass}
+              />
+            </div>
+
+            <div className="flex items-center justify-between py-1 text-xs">
+              <label className="flex items-center gap-2 text-white/50 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={recruiterRemember}
+                  onChange={(e) => setRecruiterRemember(e.target.checked)}
+                  className="rounded border-white/10 text-emerald-600 bg-white/5 focus:ring-0"
+                />
+                Remember Me
+              </label>
+            </div>
+
+            <button
+              onClick={() => handleLogin("employer", recruiterEmail, recruiterPassword, setRecruiterLoading)}
+              disabled={recruiterLoading}
+              className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 text-white font-semibold text-sm transition-all duration-200 hover:shadow-[0_0_20px_rgba(5,150,105,0.3)] active:scale-[0.98] cursor-pointer"
+            >
+              {recruiterLoading ? "Signing in..." : "Recruiter Sign In"}
+            </button>
+
+            <div className="flex items-center gap-3 py-1">
+              <div className="flex-1 h-px bg-white/5" />
+              <span className="text-white/20 text-[10px] font-bold uppercase tracking-widest">or</span>
+              <div className="flex-1 h-px bg-white/5" />
+            </div>
+
+            <div className="flex justify-center">
+              <GoogleLogin
+                onSuccess={(res) => handleGoogleLogin(res, "employer")}
+                onError={() => toast.error("Google Authentication Failed")}
+              />
+            </div>
+
+            <p className="text-center text-xs text-white/30 mt-4">
+              Don't have an account?{" "}
+              <Link to="/register-recruiter" className="text-emerald-400 hover:text-emerald-300 font-bold transition">
+                Create account
+              </Link>
+            </p>
+          </div>
+        </div>
+      </div>
+
     </div>
   );
 };

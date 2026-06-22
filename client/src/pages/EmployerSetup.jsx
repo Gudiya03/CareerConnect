@@ -1,177 +1,311 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { API } from "../api/api";
 import { useNavigate } from "react-router-dom";
-
-const Field = ({ label, optional, children }) => (
-  <div className="space-y-1.5">
-    <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-      {label}
-      {optional && (
-        <span className="normal-case font-normal text-gray-400">(optional)</span>
-      )}
-    </label>
-    {children}
-  </div>
-);
+import toast, { Toaster } from "react-hot-toast";
 
 const inputClass =
-  "w-full px-4 py-3 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all";
+  "w-full px-4 py-3 text-sm rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-[#111120] text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition-all";
+
+const labelClass =
+  "text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-1.5 block";
 
 const EmployerSetup = () => {
-  const [companyName, setCompanyName] = useState("");
-  const [companyWebsite, setCompanyWebsite] = useState("");
-  const [location, setLocation] = useState("");
-  const [industry, setIndustry] = useState("");
-  const [description, setDescription] = useState("");
+  const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
-
   const navigate = useNavigate();
 
+  // Recruiter Profile
+  const [recruiterName, setRecruiterName] = useState("");
+  const [officialEmail, setOfficialEmail] = useState("");
+  const [recruiterPhone, setRecruiterPhone] = useState("");
+  const [designation, setDesignation] = useState("");
+
+  // Company Profile
+  const [companyName, setCompanyName] = useState("");
+  const [companyLogo, setCompanyLogo] = useState("");
+  const [companyWebsite, setCompanyWebsite] = useState("");
+  const [industry, setIndustry] = useState("");
+  const [companySize, setCompanySize] = useState("1-10 employees");
+  const [companyDescription, setCompanyDescription] = useState("");
+  const [businessRegNo, setBusinessRegNo] = useState("");
+  const [companyAddress, setCompanyAddress] = useState("");
+
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      try {
+        const token = localStorage.getItem("accessToken");
+        if (!token) return;
+        const res = await API.get("/auth/profile", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const profile = res.data;
+        if (profile) {
+          setRecruiterName(profile.name || localStorage.getItem("name") || "");
+          setOfficialEmail(profile.email || localStorage.getItem("email") || "");
+          setRecruiterPhone(profile.recruiterPhone || "");
+          setDesignation(profile.designation || "");
+          setCompanyName(profile.companyName || "");
+          setCompanyLogo(profile.companyLogo || "");
+          setCompanyWebsite(profile.companyWebsite || "");
+          setIndustry(profile.industry || "");
+          setCompanySize(profile.companySize || "11-50 employees");
+          setCompanyDescription(profile.companyDescription || "");
+          setBusinessRegNo(profile.businessRegNo || "");
+          setCompanyAddress(profile.companyAddress || "");
+        }
+      } catch (err) {
+        console.error("Error loading recruiter profile details for setup:", err);
+      }
+    };
+    fetchProfileData();
+  }, []);
+
   const submit = async () => {
-    if (!companyName) {
-      alert("Company name is required");
+    if (!companyName || !recruiterName || !designation || !businessRegNo) {
+      toast.error("Please fill in all required fields");
       return;
     }
+
     try {
       setLoading(true);
       const token = localStorage.getItem("accessToken");
 
-      await API.put(
-        "/auth/profile",
-        { companyName, companyWebsite, location, industry, bio: description },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const profileData = {
+        name: recruiterName,
+        recruiterPhone,
+        designation,
+        companyName,
+        companyLogo,
+        companyWebsite,
+        industry,
+        companySize,
+        companyDescription,
+        businessRegNo,
+        companyAddress,
+      };
 
-      alert("Profile setup complete 🚀");
-      navigate("/employer");
+      await API.put("/auth/profile", profileData, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      // Update name in local storage if updated
+      localStorage.setItem("name", recruiterName);
+      localStorage.setItem("companyName", companyName);
+
+      toast.success("Recruiter setup completed successfully 🎉");
+      setTimeout(() => {
+        navigate("/employer");
+      }, 1500);
+
     } catch (err) {
-      console.log("FULL ERROR:", err);
-      console.log("ERROR DATA:", err.response?.data);
-      alert(err.response?.data?.message || "Something went wrong");
+      toast.error(err.response?.data?.message || "Setup failed");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-violet-50 dark:from-gray-950 dark:via-gray-900 dark:to-indigo-950 px-4 py-10">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-white to-teal-50 dark:from-[#060814] dark:via-[#050e18] dark:to-[#071311] px-4 py-12">
+      <Toaster position="top-right" />
 
-      {/* Background blobs */}
+      {/* Glow Blobs */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden -z-10">
-        <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-indigo-300/20 blur-3xl" />
-        <div className="absolute -bottom-32 -right-32 w-96 h-96 rounded-full bg-violet-300/20 blur-3xl" />
+        <div className="absolute top-10 left-10 w-96 h-96 rounded-full bg-emerald-300/10 dark:bg-emerald-600/5 blur-3xl" />
+        <div className="absolute bottom-10 right-10 w-96 h-96 rounded-full bg-teal-300/10 dark:bg-teal-600/5 blur-3xl" />
       </div>
 
-      <div className="w-full max-w-md">
-        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl shadow-indigo-100/50 dark:shadow-indigo-950/50 border border-gray-100 dark:border-gray-800 overflow-hidden">
+      <div className="w-full max-w-xl">
+        <div className="bg-white dark:bg-[#101920] rounded-3xl shadow-xl shadow-emerald-100/50 dark:shadow-black/60 border border-gray-100 dark:border-white/5 overflow-hidden">
+          {/* Header Progress strip */}
+          <div className="bg-gradient-to-r from-emerald-500 via-emerald-600 to-teal-600 px-8 py-7 text-white">
+            <h2 className="text-xl font-bold tracking-tight">Complete Recruiter Profile</h2>
+            <p className="text-emerald-100 text-xs mt-1">Configure company credentials & contact parameters</p>
 
-          {/* Header strip */}
-          <div className="bg-gradient-to-r from-indigo-500 to-violet-500 px-8 py-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-sm flex-shrink-0">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="2" y="7" width="20" height="14" rx="2" />
-                  <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
-                </svg>
-              </div>
-              <div>
-                <h2 className="text-lg font-bold text-white leading-tight">Setup Your Company</h2>
-                <p className="text-indigo-100 text-xs">Tell candidates about your organisation</p>
-              </div>
-            </div>
-
-            {/* Progress dots */}
-            <div className="flex items-center gap-1.5 mt-4">
-              {[1, 2, 3].map((step) => (
+            <div className="flex items-center gap-2 mt-5">
+              {[1, 2].map((s) => (
                 <div
-                  key={step}
-                  className={`h-1.5 rounded-full ${step === 1 ? "w-6 bg-white" : "w-3 bg-white/40"}`}
+                  key={s}
+                  className={`h-2 rounded-full transition-all ${
+                    s === step ? "w-8 bg-white" : s < step ? "w-4 bg-white/60" : "w-2.5 bg-white/30"
+                  }`}
                 />
               ))}
-              <span className="ml-2 text-white/70 text-xs">Step 1 of 3</span>
+              <span className="ml-2 text-white/80 text-[11px] font-semibold uppercase tracking-wider">
+                Step {step} of 2
+              </span>
             </div>
           </div>
 
-          {/* Form */}
-          <div className="px-8 py-7 space-y-5">
+          <div className="p-8 space-y-6">
+            {/* STEP 1: Recruiter Information */}
+            {step === 1 && (
+              <div className="space-y-4">
+                <div>
+                  <label className={labelClass}>Recruiter Name *</label>
+                  <input
+                    placeholder="e.g. Sarah Jenkins"
+                    value={recruiterName}
+                    onChange={(e) => setRecruiterName(e.target.value)}
+                    className={inputClass}
+                    required
+                  />
+                </div>
 
-            <Field label="Company Name">
-              <input
-                value={companyName}
-                placeholder="e.g. Acme Corp"
-                className={inputClass}
-                onChange={(e) => setCompanyName(e.target.value)}
-              />
-            </Field>
+                <div>
+                  <label className={labelClass}>Official Email</label>
+                  <input
+                    type="email"
+                    value={officialEmail}
+                    className={`${inputClass} opacity-60 cursor-not-allowed`}
+                    disabled
+                  />
+                </div>
 
-            <Field label="Website" optional>
-              <input
-                value={companyWebsite}
-                placeholder="https://yourcompany.com"
-                className={inputClass}
-                onChange={(e) => setCompanyWebsite(e.target.value)}
-              />
-            </Field>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className={labelClass}>Designation / Role *</label>
+                    <input
+                      placeholder="e.g. HR Manager / Tech Recruiter"
+                      value={designation}
+                      onChange={(e) => setDesignation(e.target.value)}
+                      className={inputClass}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Phone Number</label>
+                    <input
+                      placeholder="e.g. +91 9876543210"
+                      value={recruiterPhone}
+                      onChange={(e) => setRecruiterPhone(e.target.value)}
+                      className={inputClass}
+                    />
+                  </div>
+                </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Field label="Location">
-                <input
-                  value={location}
-                  placeholder="e.g. New York, NY"
-                  className={inputClass}
-                  onChange={(e) => setLocation(e.target.value)}
-                />
-              </Field>
-              <Field label="Industry">
-                <input
-                  value={industry}
-                  placeholder="e.g. IT, Finance"
-                  className={inputClass}
-                  onChange={(e) => setIndustry(e.target.value)}
-                />
-              </Field>
-            </div>
+                <button
+                  onClick={() => setStep(2)}
+                  className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:opacity-90 text-white font-semibold py-3 rounded-xl shadow-lg transition cursor-pointer mt-6"
+                >
+                  Continue to Company Details
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
+                </button>
+              </div>
+            )}
 
-            <Field label="Description" optional>
-              <textarea
-                value={description}
-                rows={3}
-                placeholder="Brief description of your company, culture, and mission..."
-                className={`${inputClass} resize-none`}
-                onChange={(e) => setDescription(e.target.value)}
-              />
-            </Field>
+            {/* STEP 2: Company Info & Verification */}
+            {step === 2 && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className={labelClass}>Company Name *</label>
+                    <input
+                      placeholder="e.g. Acme Corporation"
+                      value={companyName}
+                      onChange={(e) => setCompanyName(e.target.value)}
+                      className={inputClass}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Company Logo URL</label>
+                    <input
+                      placeholder="e.g. https://logo.url/logo.png"
+                      value={companyLogo}
+                      onChange={(e) => setCompanyLogo(e.target.value)}
+                      className={inputClass}
+                    />
+                  </div>
+                </div>
 
-            <button
-              onClick={submit}
-              disabled={loading}
-              className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-500 to-violet-500 hover:from-indigo-600 hover:to-violet-600 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-xl shadow-lg shadow-indigo-200 dark:shadow-indigo-950/50 transition-all duration-150 active:scale-[0.98] text-sm mt-2"
-            >
-              {loading ? (
-                <>
-                  <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                  </svg>
-                  Saving…
-                </>
-              ) : (
-                <>
-                  Save & Continue
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="5" y1="12" x2="19" y2="12" />
-                    <polyline points="12 5 19 12 12 19" />
-                  </svg>
-                </>
-              )}
-            </button>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className={labelClass}>Company Website</label>
+                    <input
+                      placeholder="e.g. https://acme.org"
+                      value={companyWebsite}
+                      onChange={(e) => setCompanyWebsite(e.target.value)}
+                      className={inputClass}
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Industry Sector</label>
+                    <input
+                      placeholder="e.g. Information Technology"
+                      value={industry}
+                      onChange={(e) => setIndustry(e.target.value)}
+                      className={inputClass}
+                    />
+                  </div>
+                </div>
 
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className={labelClass}>Company Size</label>
+                    <select
+                      value={companySize}
+                      onChange={(e) => setCompanySize(e.target.value)}
+                      className={`${inputClass} select-dropdown`}
+                    >
+                      <option value="1-10 employees">1-10 employees</option>
+                      <option value="11-50 employees">11-50 employees</option>
+                      <option value="51-200 employees">51-200 employees</option>
+                      <option value="201-500 employees">201-500 employees</option>
+                      <option value="500+ employees">500+ employees</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className={labelClass}>Business Registration No. *</label>
+                    <input
+                      placeholder="e.g. CIN / VAT / GST Registration"
+                      value={businessRegNo}
+                      onChange={(e) => setBusinessRegNo(e.target.value)}
+                      className={inputClass}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className={labelClass}>Company Address</label>
+                  <input
+                    placeholder="e.g. 5th Avenue, Silicon Valley, CA"
+                    value={companyAddress}
+                    onChange={(e) => setCompanyAddress(e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+
+                <div>
+                  <label className={labelClass}>Company Description</label>
+                  <textarea
+                    placeholder="Tell candidates about your company mission and culture..."
+                    value={companyDescription}
+                    onChange={(e) => setCompanyDescription(e.target.value)}
+                    rows={2}
+                    className={`${inputClass} resize-none`}
+                  />
+                </div>
+
+                <div className="flex gap-3 mt-6">
+                  <button
+                    onClick={() => setStep(1)}
+                    className="flex-1 py-3 border border-gray-200 dark:border-slate-800 text-gray-500 dark:text-gray-400 font-semibold rounded-xl text-sm hover:bg-gray-50 dark:hover:bg-slate-800 transition cursor-pointer"
+                  >
+                    Back
+                  </button>
+                  <button
+                    onClick={submit}
+                    disabled={loading}
+                    className="flex-[2] flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-semibold py-3 rounded-xl shadow-lg transition cursor-pointer disabled:opacity-60"
+                  >
+                    {loading ? "Saving Company..." : "Save & Open Recruiter Dashboard"}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
-
-        <p className="text-center text-xs text-gray-400 mt-4">
-          You can update your company profile anytime from settings
-        </p>
       </div>
     </div>
   );

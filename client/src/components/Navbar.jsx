@@ -20,7 +20,7 @@ const Navbar = () => {
 
   const avatarLetter =
     role === "employer"
-      ? (companyName?.trim()?.charAt(0)?.toUpperCase() || "E")
+      ? ((companyName || userName)?.trim()?.charAt(0)?.toUpperCase() || "E")
       : (userName?.trim()?.charAt(0)?.toUpperCase() || "U");
 
   /* Dark mode */
@@ -55,12 +55,23 @@ const Navbar = () => {
   const navLinks =
     role === "candidate"
       ? [
+          { label: "Dashboard", to: "/candidate-dashboard" },
           { label: "Jobs", to: "/jobs" },
-          { label: "Saved Jobs", to: "/saved-jobs" },
-          { label: "Applications", to: "/my-applications" }
+          { label: "Recommendations", to: "/job-recommendations" },
+          { label: "Resume Analyzer", to: "/resume-analyzer" },
+          { label: "Interviews Experience", to: "/interview-experiences" },
+          { label: "Assessments", to: "/assessments" },
+          { label: "Resume Builder", to: "/resume-builder" },
+          { label: "AI Tools", to: "/career-tools" },
+          { label: "Chat", to: "/chat" }
         ]
       : role === "employer"
-      ? [{ label: "Dashboard", to: "/employer" }]
+      ? [
+          { label: "Dashboard", to: "/employer" },
+          { label: "Chat", to: "/chat" }
+        ]
+      : role === "admin"
+      ? [{ label: "Admin Dashboard", to: "/admin" }]
       : [];
 
   return (
@@ -140,7 +151,7 @@ const Navbar = () => {
                       {/* Header */}
                       <div className="px-3.5 py-3 border-b border-black/[0.06] dark:border-white/[0.06]">
                         <p className="text-[13px] font-semibold text-gray-900 dark:text-gray-50 truncate">
-                          {role === "employer" ? companyName : userName}
+                          {role === "employer" ? (companyName || userName) : userName}
                         </p>
                         <p className="text-[11px] text-gray-400 capitalize mt-0.5">{role}</p>
                       </div>

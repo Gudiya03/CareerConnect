@@ -204,6 +204,9 @@ const Home = () => {
             <span className="hover:text-white cursor-pointer transition">Terms of Service</span>
             <span className="hover:text-white cursor-pointer transition">Privacy Policy</span>
             <span className="hover:text-white cursor-pointer transition">Support</span>
+            <Link to="/admin-login" className="hover:text-indigo-400 font-semibold transition flex items-center gap-1">
+              <span>🛡️</span> Admin Login
+            </Link>
           </div>
         </div>
       </footer>

@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { Toaster } from "react-hot-toast"; // ⭐ GLOBAL TOASTS
 
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -22,6 +23,23 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Home from "./pages/Home"; // ⭐ NEW LANDING PAGE
 import SavedJobs from "./pages/SavedJobs"; // ⭐ NEW SAVED JOBS PAGE
+import AdminLayout from "./components/AdminLayout"; // ⭐ NEW ADMIN SIDE
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminUsers from "./pages/AdminUsers";
+import AdminJobs from "./pages/AdminJobs";
+import AdminApplications from "./pages/AdminApplications";
+import AdminSettings from "./pages/AdminSettings";
+import ResumeBuilder from "./pages/ResumeBuilder";
+import CareerTools from "./pages/CareerTools";
+import Chat from "./pages/Chat";
+import CandidateRegister from "./pages/CandidateRegister";
+import RecruiterRegister from "./pages/RecruiterRegister";
+import CandidateDashboard from "./pages/CandidateDashboard";
+import ResumeAnalyzer from "./pages/ResumeAnalyzer";
+import JobRecommendations from "./pages/JobRecommendations";
+import InterviewExperiences from "./pages/InterviewExperiences";
+import VerifiedAssessments from "./pages/VerifiedAssessments";
+import AdminLogin from "./pages/AdminLogin";
 
 function Layout() {
   const location = useLocation();
@@ -29,10 +47,12 @@ function Layout() {
   const showNavbar =
     location.pathname !== "/" &&
     location.pathname !== "/login" &&
+    location.pathname !== "/admin-login" &&
     location.pathname !== "/register";
 
   return (
     <div className="w-full min-h-screen overflow-x-hidden bg-white dark:bg-[#020617]">
+      <Toaster position="top-right" />
 
       {showNavbar && <Navbar />}
 
@@ -42,15 +62,25 @@ function Layout() {
 
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/admin-login" element={<AdminLogin />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/register-candidate" element={<CandidateRegister />} />
+          <Route path="/register-recruiter" element={<RecruiterRegister />} />
+          <Route path="/candidate-dashboard" element={<CandidateDashboard />} />
 
           <Route path="/jobs" element={<Jobs />} />
           <Route path="/saved-jobs" element={<SavedJobs />} />
-          <Route path="/select-role" element={<SelectRole />} />
-          <Route path="/employer-setup" element={<EmployerSetup />} />
-          <Route path="/candidate-setup" element={<CandidateSetup />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
+
+          {/* ⭐ NEW PROFILE & BUILDER ROUTES */}
+          <Route path="/resume-builder" element={<ResumeBuilder />} />
+          <Route path="/career-tools" element={<CareerTools />} />
+          <Route path="/resume-analyzer" element={<ResumeAnalyzer />} />
+          <Route path="/job-recommendations" element={<JobRecommendations />} />
+          <Route path="/interview-experiences" element={<InterviewExperiences />} />
+          <Route path="/assessments" element={<VerifiedAssessments />} />
+          <Route path="/chat" element={<Chat />} />
 
           {/* ⭐ NEW JOB DETAILS PAGE */}
           <Route path="/job/:id" element={<JobDetails />} />
@@ -70,6 +100,15 @@ function Layout() {
             <Route path="analytics" element={<EmployerAnalytics />} />
             <Route path="profile" element={<EmployerProfile />} />
 
+          </Route>
+
+          {/* ADMIN ROUTES */}
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<AdminDashboard />} />
+            <Route path="users" element={<AdminUsers />} />
+            <Route path="jobs" element={<AdminJobs />} />
+            <Route path="applications" element={<AdminApplications />} />
+            <Route path="settings" element={<AdminSettings />} />
           </Route>
 
         </Routes>

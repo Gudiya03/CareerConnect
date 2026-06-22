@@ -125,119 +125,104 @@ const Jobs = () => {
   });
 
   return (
+    <div className="w-full min-h-screen bg-[#080d22] bg-gradient-to-br from-[#080d22] via-[#040817] to-[#0c0e2b] text-white transition-colors duration-200 relative overflow-hidden">
+      {/* Glow Blobs */}
+      <div className="absolute top-[-100px] left-[-100px] w-[400px] h-[400px] bg-blue-600/10 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute bottom-[-100px] right-[-100px] w-[350px] h-[350px] bg-indigo-600/10 rounded-full blur-[90px] pointer-events-none" />
 
-    <div className="w-full min-h-screen bg-gray-50 dark:bg-[#020617] text-gray-900 dark:text-white">
       <Toaster position="top-right" />
 
-      <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-12">
+      <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-12 relative z-10">
 
         {/* 🔥 PREMIUM HEADER */}
-
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl mb-10 border flex justify-between items-center">
-
+        <div className="bg-white/[0.02] backdrop-blur-xl border border-white/5 p-6 rounded-xl mb-10 flex justify-between items-center shadow-xl">
           <div>
-            <h1 className="text-3xl font-bold">Find Your Dream Job</h1>
-            <p className="text-gray-500 text-sm">
+            <h1 className="text-3xl font-extrabold text-white tracking-tight">Find Your Dream Job</h1>
+            <p className="text-blue-200/40 text-sm mt-1">
               Personalized for you
             </p>
           </div>
 
           <div className="text-right">
-            <p className="text-sm text-gray-400">Profile Strength</p>
-            <p className="text-lg font-bold text-indigo-500">
+            <p className="text-sm text-blue-200/40 font-bold uppercase tracking-wider">Profile Strength</p>
+            <p className="text-lg font-bold text-blue-400">
               {userSkills.length * 20}%
             </p>
           </div>
-
         </div>
 
         {/* SEARCH */}
-
         <div className="mb-10 flex flex-col md:flex-row gap-4 md:items-center">
-
           <input
             placeholder="Search job title or company..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full md:w-[420px] p-4 rounded-xl bg-gray-100 dark:bg-slate-800 border focus:ring-2 focus:ring-indigo-500"
+            className="w-full md:w-[420px] p-4 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/60 transition-all backdrop-blur-sm"
           />
 
-          <div className="text-gray-500">
+          <div className="text-blue-200/40 text-sm font-semibold">
             {filteredJobs.length} jobs found
           </div>
-
         </div>
 
         {/* JOB GRID */}
-
         <div className="grid gap-8 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-
           {filteredJobs.map((job) => {
-
             const match = getMatch(job.skills);
 
             return (
-
               <div
                 key={job._id}
-                className="bg-white dark:bg-slate-900 p-6 rounded-2xl border shadow-sm hover:shadow-xl hover:-translate-y-1 transition flex flex-col justify-between"
+                className="bg-white/[0.02] backdrop-blur-xl border border-white/5 p-6 rounded-2xl shadow-xl hover:bg-white/[0.04] hover:-translate-y-1 hover:shadow-blue-500/5 hover:border-blue-500/20 transition-all duration-300 flex flex-col justify-between"
               >
-
                 <div>
-
                   {/* TITLE + SAVE */}
-                  <div className="flex justify-between items-center">
-
-                    <h3 className="text-lg font-semibold">
+                  <div className="flex justify-between items-start gap-2">
+                    <h3 className="text-lg font-semibold text-white tracking-tight line-clamp-2">
                       {job.title}
                     </h3>
-
-                    <button onClick={() => toggleSave(job._id)}>
+                    <button 
+                      onClick={() => toggleSave(job._id)}
+                      className="text-lg focus:outline-none hover:scale-110 active:scale-95 transition-transform"
+                    >
                       {savedJobs.includes(job._id) ? "❤️" : "🤍"}
                     </button>
-
                   </div>
 
-                  <p className="text-indigo-500 text-sm font-medium">
+                  <p className="text-blue-400 text-sm font-semibold mt-1">
                     {job.company}
                   </p>
 
-                  <p className="text-xs text-gray-400 mb-2">
+                  <p className="text-[10px] text-blue-200/40 font-bold uppercase tracking-wider mb-3">
                     Posted {timeAgo(job.createdAt)}
                   </p>
 
                   {/* MATCH */}
-                  <p className="text-sm mb-2">
+                  <p className="text-xs mb-3 text-blue-200/60 font-semibold">
                     Match:{" "}
-                    <span className="text-green-500 font-semibold">
+                    <span className="text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
                       {match}%
                     </span>
                   </p>
 
-                  <div className="flex flex-wrap gap-2 text-xs mb-4">
-
-                    📍 {job.location}
-                    <br></br><br></br>
-
-                    💰 {job.salary}
-
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-blue-200/60 font-medium mb-4">
+                    <span>📍 {job.location}</span>
+                    <span>💰 {job.salary}</span>
                   </div>
 
-                  <p className="text-sm line-clamp-3">
+                  <p className="text-sm text-blue-100/70 line-clamp-3 leading-relaxed">
                     {job.description}
                   </p>
-
                 </div>
 
                 <div className="flex flex-col gap-3 mt-6">
-
                   <button
                     onClick={() => openApplyModal(job._id)}
                     disabled={appliedJobs.includes(job._id)}
-                    className={`w-full py-2 rounded-lg ${
+                    className={`w-full py-2.5 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer shadow-md ${
                       appliedJobs.includes(job._id)
-                        ? "bg-green-600 text-white"
-                        : "bg-gradient-to-r from-indigo-500 to-purple-600 text-white"
+                        ? "bg-emerald-600/80 text-white border border-emerald-500/20 shadow-emerald-600/10"
+                        : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-blue-600/10 hover:shadow-blue-500/20"
                     }`}
                   >
                     {appliedJobs.includes(job._id)
@@ -245,64 +230,58 @@ const Jobs = () => {
                       : "Apply Now"}
                   </button>
 
-                  <Link to={`/job/${job._id}`}>
-                    <button className="w-full py-2 border rounded-lg">
+                  <Link to={`/job/${job._id}`} className="block">
+                    <button className="w-full py-2.5 border border-white/10 text-blue-200 hover:bg-white/5 rounded-xl text-xs font-semibold transition-all duration-150 cursor-pointer">
                       View Details
                     </button>
                   </Link>
-
                 </div>
-
               </div>
-
             );
           })}
-
         </div>
-
       </div>
 
       {/* MODAL */}
-
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
-
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-xl w-[400px]">
-
-            <h2 className="text-xl font-semibold mb-4">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-[#0c142c] border border-white/10 p-6 rounded-2xl w-[400px] shadow-2xl relative z-50 text-white space-y-4 animate-[dropIn_0.2s_ease-out]">
+            <style>{`@keyframes dropIn{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}`}</style>
+            
+            <h2 className="text-xl font-bold text-white tracking-tight">
               Upload Resume
             </h2>
 
-            <input
-              type="file"
-              accept=".pdf"
-              onChange={(e) => setResume(e.target.files[0])}
-              className="mb-4"
-            />
+            <div className="p-4 rounded-xl border border-dashed border-white/10 bg-white/[0.01] flex flex-col items-center justify-center gap-2">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-400">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+              <input
+                type="file"
+                accept=".pdf"
+                onChange={(e) => setResume(e.target.files[0])}
+                className="text-xs text-blue-200 file:mr-3 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-[11px] file:font-semibold file:bg-blue-500/10 file:text-blue-400 hover:file:bg-blue-500/20 file:cursor-pointer"
+              />
+            </div>
 
-            <div className="flex gap-3">
-
+            <div className="flex gap-3 pt-2">
               <button
                 onClick={applyJob}
-                className="bg-indigo-600 text-white px-4 py-2 rounded"
+                className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-md shadow-blue-600/20 hover:shadow-blue-500/35 transition-all cursor-pointer"
               >
                 Apply
               </button>
 
               <button
                 onClick={() => setShowModal(false)}
-                className="border px-4 py-2 rounded"
+                className="flex-1 border border-white/10 text-blue-200 hover:bg-white/5 font-semibold text-xs px-4 py-2.5 rounded-xl transition-all cursor-pointer"
               >
                 Cancel
               </button>
-
             </div>
-
           </div>
-
         </div>
       )}
-
     </div>
   );
 };

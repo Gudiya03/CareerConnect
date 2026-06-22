@@ -12,7 +12,8 @@ const {
   setRole,
   forgotPassword,
   resetPassword,
-  refreshToken // ✅ ADD THIS
+  refreshToken, // ✅ ADD THIS
+  getCandidates
 } = require("../controllers/authController");
 
 const { protect } = require("../middleware/authMiddleware");
@@ -36,5 +37,8 @@ router.post("/reset-password/:token", resetPassword);
 
 // ================= RESUME =================
 router.post("/upload-resume", protect, upload.single("resume"), uploadResume);
+
+// ================= CANDIDATES (EMPLOYER SIDE SEARCH) =================
+router.get("/candidates", protect, getCandidates);
 
 module.exports = router;

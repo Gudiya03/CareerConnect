@@ -1,4 +1,7 @@
 const Application = require("../models/Application");
+const Job = require("../models/Job");
+const User = require("../models/User");
+const sendEmail = require("../utils/sendEmail");
 
 
 // ============================
@@ -32,6 +35,36 @@ exports.applyJob = async (req, res) => {
       // ⭐ SAVE RESUME FILE PATH
       resume: req.file ? req.file.path : null
     });
+
+    // Send email notifications
+    const targetJob = await Job.findById(jobId).populate("postedBy", "name email");
+    if (targetJob) {
+      // 1. Recruiter Alert
+      if (targetJob.postedBy && targetJob.postedBy.email) {
+        sendEmail({
+          to: targetJob.postedBy.email,
+          subject: `New Application: ${targetJob.title}`,
+          html: `
+            <h3>Hello ${targetJob.postedBy.name},</h3>
+            <p>You have received a new application for the position of <strong>${targetJob.title}</strong> at ${targetJob.company}.</p>
+            <p>Applicant: <strong>${req.user.name}</strong> (${req.user.email})</p>
+            <p>Please log in to your recruiter dashboard to audit candidate profiles and update the hiring state.</p>
+          `
+        });
+      }
+
+      // 2. Candidate Alert
+      sendEmail({
+        to: req.user.email,
+        subject: `Application Confirmation: ${targetJob.title}`,
+        html: `
+          <h3>Hello ${req.user.name},</h3>
+          <p>This email confirms that you have successfully applied for the role of <strong>${targetJob.title}</strong> at ${targetJob.company}.</p>
+          <p>Recruiters are currently auditing applicants. We will notify you immediately once there is a status update.</p>
+          <p>Best regards,<br/>CareerConnect Team</p>
+        `
+      });
+    }
 
     res.json({
       message: "Applied successfully",
@@ -94,7 +127,7 @@ exports.updateStatus = async (req, res) => {
     const appId = req.params.id;
     const { status } = req.body; // accepted / rejected
 
-    const application = await Application.findById(appId);
+    const application = await Application.findById(appId).populate("applicant", "name email").populate("job", "title company");
 
     if (!application) {
       return res.status(404).json({ message: "Application not found" });
@@ -102,6 +135,34 @@ exports.updateStatus = async (req, res) => {
 
     application.status = status;
     await application.save();
+
+    // Trigger Nodemailer status update email
+    if (application.applicant && application.applicant.email && application.job) {
+      const isAccepted = status === "accepted";
+      const subject = isAccepted
+        ? `Congratulations! You've been accepted for ${application.job.title}`
+        : `Update on your application for ${application.job.title}`;
+      
+      const emailHtml = isAccepted
+        ? `
+          <h3>Hello ${application.applicant.name},</h3>
+          <p>We have exciting news! The recruiter for <strong>${application.job.company}</strong> has updated your application status for the role of <strong>${application.job.title}</strong> to <strong>Accepted</strong>! 🎉</p>
+          <p>They will contact you shortly regarding the next steps in the interview/offer process.</p>
+          <p>Best regards,<br/>CareerConnect Team</p>
+        `
+        : `
+          <h3>Hello ${application.applicant.name},</h3>
+          <p>Thank you for your interest in the position of <strong>${application.job.title}</strong> at ${application.job.company}.</p>
+          <p>Unfortunately, the recruiter has decided not to move forward with your application at this time. We encourage you to keep applying to other matching opportunities on the portal!</p>
+          <p>Best regards,<br/>CareerConnect Team</p>
+        `;
+
+      sendEmail({
+        to: application.applicant.email,
+        subject,
+        html: emailHtml
+      });
+    }
 
     res.json({
       message: "Status updated",
