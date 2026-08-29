@@ -48,7 +48,8 @@ function Layout() {
     location.pathname !== "/" &&
     location.pathname !== "/login" &&
     location.pathname !== "/admin-login" &&
-    location.pathname !== "/register";
+    location.pathname !== "/register" &&
+    location.pathname !== "/candidate-dashboard";
 
   return (
     <div className="w-full min-h-screen overflow-x-hidden bg-white dark:bg-[#020617]">
