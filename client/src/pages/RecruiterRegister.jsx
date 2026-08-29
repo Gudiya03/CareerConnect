@@ -120,7 +120,7 @@ const RecruiterRegister = () => {
       localStorage.setItem("email", res.data.email);
       localStorage.setItem("companyName", res.data.companyName);
 
-      toast.success("Recruiter Account Registered successfully 🎉");
+      toast.success("Recruiter Account Registered successfully 🎉", { duration: 2000 });
       setTimeout(() => {
         navigate("/employer-setup");
       }, 1500);

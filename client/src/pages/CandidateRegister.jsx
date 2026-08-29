@@ -126,7 +126,7 @@ const CandidateRegister = () => {
       localStorage.setItem("email", res.data.email);
       localStorage.setItem("companyName", "");
 
-      toast.success("Candidate Registered successfully 🎉");
+      toast.success("Candidate Registered successfully 🎉", { duration: 2000 });
       setTimeout(() => {
         navigate("/candidate-setup");
       }, 1500);

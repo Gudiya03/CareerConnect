@@ -92,7 +92,7 @@ const EmployerSetup = () => {
       localStorage.setItem("name", recruiterName);
       localStorage.setItem("companyName", companyName);
 
-      toast.success("Recruiter setup completed successfully 🎉");
+      toast.success("Recruiter setup completed successfully 🎉", { duration: 2000 });
       setTimeout(() => {
         navigate("/employer");
       }, 1500);

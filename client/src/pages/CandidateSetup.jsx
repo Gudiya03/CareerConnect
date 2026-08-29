@@ -184,7 +184,7 @@ const CandidateSetup = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      toast.success("Profile registration complete 🚀");
+      toast.success("Profile registration complete 🚀", { duration: 2000 });
       setTimeout(() => {
         navigate("/candidate-dashboard");
       }, 1500);
