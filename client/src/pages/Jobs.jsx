@@ -7,7 +7,10 @@ const Jobs = () => {
 
   const [jobs, setJobs] = useState([]);
   const [appliedJobs, setAppliedJobs] = useState([]);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(() => {
+    const query = new URLSearchParams(window.location.search).get("search");
+    return query ? decodeURIComponent(query) : "";
+  });
 
   // ⭐ NEW STATES
   const [savedJobs, setSavedJobs] = useState([]);
