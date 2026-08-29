@@ -67,6 +67,8 @@ function Layout() {
           <Route path="/register-candidate" element={<CandidateRegister />} />
           <Route path="/register-recruiter" element={<RecruiterRegister />} />
           <Route path="/candidate-dashboard" element={<CandidateDashboard />} />
+          <Route path="/candidate-setup" element={<CandidateSetup />} />
+          <Route path="/employer-setup" element={<EmployerSetup />} />
 
           <Route path="/jobs" element={<Jobs />} />
           <Route path="/saved-jobs" element={<SavedJobs />} />
