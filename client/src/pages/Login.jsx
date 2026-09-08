@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { API } from "../api/api";
 import { useNavigate, Link } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 import { jwtDecode } from "jwt-decode";
 import toast, { Toaster } from "react-hot-toast";
+import { getDashboardForRole } from "../components/PrivateRoute";
 
 const Login = () => {
   const [activeRole, setActiveRole] = useState("candidate"); // "candidate" or "employer"
@@ -16,6 +17,14 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem("accessToken");
+    const role = localStorage.getItem("role");
+    if (token && role) {
+      navigate(getDashboardForRole(role), { replace: true });
+    }
+  }, [navigate]);
 
   const handleLogin = async (e) => {
     if (e) e.preventDefault();
